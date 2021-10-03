@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: no.ntnu.idatt210620217.giddapi.controller.SportStatsControllerTest
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.297 s - in no.ntnu.idatt210620217.giddapi.controller.SportStatsControllerTest

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Activity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.model</a> &gt; <span class="el_source">Activity.java</span></div><h1>Activity.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.model;
+
+import java.util.*;
+
+import javax.persistence.*;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+@Entity
+@Table(name = &quot;Activity&quot;)
+
+/**
+ * Class for Activity and database setup
+ * @version 1.0
+ */
+public class Activity {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private long id;
+  @Column(name = &quot;title&quot;)
+  private String title;
+  @Column(name = &quot;description&quot;)
+  private String description;
+  @Column(name = &quot;location&quot;)
+  private String location;
+  @Column(name= &quot;latitude&quot;)
+  private double latitude;
+  @Column(name= &quot;longitude&quot;)
+  private double longitude;
+  @Column(name = &quot;date&quot;)
+  private String date;
+  @Column(name = &quot;startTime&quot;)
+  private String startTime;
+  @Column(name = &quot;endTime&quot;)
+  private String endTime;
+  @Column(name = &quot;intensity&quot;)
+  private String intensity;
+  @Column(name = &quot;hasSendtEmailRequest&quot;)
+  private boolean hasSendtEmailRequest;
+  @Column(name = &quot;hasReceivedActivityPoints&quot;)
+  private boolean hasReceivedActivityPoints;
+
+  @ManyToOne
+  @JoinColumn(name = &quot;sport&quot;)
+  private Sport sport;
+
+
+  @OneToMany(mappedBy=&quot;activity&quot;, fetch = FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.PERSIST)
+  private Set&lt;Participant&gt; participants;
+
+  //todo: legge til denne til konstruktøren?
+  @OneToMany(mappedBy = &quot;activity&quot;, cascade = CascadeType.REMOVE)
+  @Column(name = &quot;equipment&quot;)
+  private Collection&lt;Equipment&gt; allEquipments;
+
+  //TODO: add arrangør, aka bruker
+  @ManyToOne()
+  @JoinColumn(name=&quot;user_id&quot;)
+  private User organizer;
+
+  @Column(name = &quot;maxParticipants&quot;)
+  private int maxParticipants;
+
+<span class="pc" id="L71">  @ManyToMany()</span>
+  @JoinTable(
+          name = &quot;waitlist&quot;,
+          joinColumns = @JoinColumn(name = &quot;activity_id&quot;),
+          inverseJoinColumns = @JoinColumn(name = &quot;user_id&quot;))
+  private Collection&lt;User&gt; waitlist = new LinkedList&lt;&gt;();
+
+
+  /**
+   * Empty class constructor
+   */
+<span class="fc" id="L82">  public Activity() {</span>
+<span class="fc" id="L83">  }</span>
+
+  /**
+   * Constructor
+   * Todo: possible to change the date and start/endTime to make it more compact
+   * Todo: Can make own object of sport
+   * @param id unique
+   * @param title of the activity
+   * @param description which describes the activity
+   * @param location where the activity will take place
+   * @param date of which the activity will occur, format åååå-mm-dd
+   * @param startTime When the activity starts, format 00:00, military hours
+   * @param endTime When the activity ends, format 00:00, military hours
+   * @param intensity of the activity
+   * @param sport What type the activity is
+   * @param maxParticipants Max number of allowed participants
+   */
+  public Activity(long id, String title, String description, String location, double latitude, double longitude, String date, String startTime,
+<span class="fc" id="L101">                  String endTime, String intensity, Sport sport, int maxParticipants) {</span>
+<span class="fc" id="L102">    this.id = id;</span>
+<span class="fc" id="L103">    this.title = title;</span>
+<span class="fc" id="L104">    this.description = description;</span>
+<span class="fc" id="L105">    this.location = location;</span>
+<span class="fc" id="L106">    this.latitude = latitude;</span>
+<span class="fc" id="L107">    this.longitude = longitude;</span>
+<span class="fc" id="L108">    this.date = date; //kunn dato</span>
+<span class="fc" id="L109">    this.startTime = startTime; //start</span>
+<span class="fc" id="L110">    this.endTime = endTime; //slutt</span>
+<span class="fc" id="L111">    this.intensity = intensity;</span>
+<span class="fc" id="L112">    this.sport = sport;</span>
+<span class="fc" id="L113">    this.maxParticipants = maxParticipants;</span>
+<span class="fc" id="L114">    this.hasSendtEmailRequest = false;</span>
+<span class="fc" id="L115">    this.hasReceivedActivityPoints = false;</span>
+<span class="fc" id="L116">  }</span>
+
+  /**
+   * Constructor without id but with equipment
+   * @param title
+   * @param title of the activity
+   * @param description which describes the activity
+   * @param location where the activity will take place
+   * @param date of which the activity will occur, format åååå-mm-dd
+   * @param startTime When the activity starts, format 00:00, military hours
+   * @param endTime When the activity ends, format 00:00, military hours
+   * @param intensity of the activity
+   * @param sport What type the activity is
+   * @param maxParticipants Max number of allowed participants
+   * @param allEqupiments All equipments needed for activity
+   */
+  public Activity(String title, String description, String location, double latitude, double longitude, String date, String startTime,
+<span class="nc" id="L133">    String endTime, String intensity, Sport sport, int maxParticipants, Collection&lt;Equipment&gt; allEqupiments) {</span>
+<span class="nc" id="L134">    this.title = title;</span>
+<span class="nc" id="L135">    this.description = description;</span>
+<span class="nc" id="L136">    this.location = location;</span>
+<span class="nc" id="L137">    this.latitude = latitude;</span>
+<span class="nc" id="L138">    this.longitude = longitude;</span>
+<span class="nc" id="L139">    this.date = date; // kunn dato</span>
+<span class="nc" id="L140">    this.startTime = startTime; // start</span>
+<span class="nc" id="L141">    this.endTime = endTime; // slutt</span>
+<span class="nc" id="L142">    this.intensity = intensity;</span>
+<span class="nc" id="L143">    this.sport = sport;</span>
+<span class="nc" id="L144">    this.maxParticipants = maxParticipants;</span>
+<span class="nc" id="L145">    this.allEquipments = allEqupiments;</span>
+<span class="nc" id="L146">    this.hasSendtEmailRequest = false;</span>
+<span class="nc" id="L147">    this.hasReceivedActivityPoints = false;</span>
+
+<span class="nc" id="L149">  }</span>
+
+
+
+  /**
+   * Getters and setters.
+   */
+  public long getId() {
+<span class="fc" id="L157">    return id;</span>
+  }
+
+  public String getTitle() {
+<span class="fc" id="L161">    return title;</span>
+  }
+
+  public User getOrganizer() {
+<span class="fc" id="L165">    return organizer;</span>
+  }
+
+  public int getMaxParticipants() {
+<span class="fc" id="L169">    return maxParticipants;</span>
+  }
+
+  public void setOrganizer(User organizer) {
+<span class="fc" id="L173">    this.organizer = organizer;</span>
+<span class="fc" id="L174">  }</span>
+
+  public void setMaxParticipants(int maxParticipants) {
+<span class="fc" id="L177">    this.maxParticipants = maxParticipants;</span>
+<span class="fc" id="L178">  }</span>
+
+  public String getDescription() {
+<span class="fc" id="L181">    return description;</span>
+  }
+
+  public String getLocation() {
+<span class="fc" id="L185">    return location;</span>
+  }
+
+<span class="fc" id="L188">  public double getLatitude() { return latitude; }</span>
+
+<span class="fc" id="L190">  public void setLatitude(double latitude) { this.latitude = latitude; }</span>
+
+<span class="fc" id="L192">  public double getLongitude() { return longitude; }</span>
+
+<span class="fc" id="L194">  public void setLongitude(double longitude) { this.longitude = longitude; }</span>
+
+  public String getDate() {
+<span class="fc" id="L197">    return date;</span>
+  }
+
+  public void setTitle(String title) {
+<span class="fc" id="L201">    this.title = title;</span>
+<span class="fc" id="L202">  }</span>
+
+  public void setDescription(String description) {
+<span class="fc" id="L205">    this.description = description;</span>
+<span class="fc" id="L206">  }</span>
+
+  public void setLocation(String location) {
+<span class="fc" id="L209">    this.location = location;</span>
+<span class="fc" id="L210">  }</span>
+
+  public void setDate(String date) {
+<span class="fc" id="L213">    this.date = date;</span>
+<span class="fc" id="L214">  }</span>
+
+  public String getStartTime() {
+<span class="fc" id="L217">    return startTime;</span>
+  }
+
+  public String getEndTime() {
+<span class="fc" id="L221">    return endTime;</span>
+  }
+
+  public void setStartTime(String startTime) {
+<span class="fc" id="L225">    this.startTime = startTime;</span>
+<span class="fc" id="L226">  }</span>
+
+  public void setEndTime(String endTime) {
+<span class="fc" id="L229">    this.endTime = endTime;</span>
+<span class="fc" id="L230">  }</span>
+
+  public String getIntensity() {
+<span class="fc" id="L233">    return intensity;</span>
+  }
+
+  public boolean isHasReceivedActivityPoints() {
+<span class="fc" id="L237">    return hasReceivedActivityPoints;</span>
+  }
+
+  public void setHasReceivedActivityPoints(boolean hasReceivedActivityPoints) {
+<span class="fc" id="L241">    this.hasReceivedActivityPoints = hasReceivedActivityPoints;</span>
+<span class="fc" id="L242">  }</span>
+
+  public boolean isHasSendtEmailRequest() {
+<span class="fc" id="L245">    return hasSendtEmailRequest;</span>
+  }
+
+  public void setHasSendtEmailRequest(boolean hasSendtEmailRequest) {
+<span class="fc" id="L249">    this.hasSendtEmailRequest = hasSendtEmailRequest;</span>
+<span class="fc" id="L250">  }</span>
+
+  public Sport getSport() {
+<span class="fc" id="L253">    return sport;</span>
+  }
+
+  public void setSport(Sport sport) {
+<span class="fc" id="L257">    this.sport = sport;</span>
+<span class="fc" id="L258">  }</span>
+
+
+  public void setIntensity(String intensity) {
+<span class="fc" id="L262">    this.intensity = intensity;</span>
+<span class="fc" id="L263">  }</span>
+
+  public Collection&lt;User&gt; getWaitlist() {
+<span class="fc" id="L266">    return this.waitlist;</span>
+  }
+
+  public Collection&lt;Equipment&gt; getAllEquipments() {
+<span class="fc" id="L270">      return allEquipments;</span>
+  }
+  public void setAllEquipments(Collection&lt;Equipment&gt; allEquipments) {
+<span class="fc" id="L273">      this.allEquipments = allEquipments;</span>
+<span class="fc" id="L274">  }</span>
+  //todo: create method to add more equipments?
+
+  public Set&lt;Participant&gt; getParticipants() {
+<span class="fc" id="L278">    return participants;</span>
+  }
+
+  public void setParticipants(Set&lt;Participant&gt; participants) {
+<span class="fc" id="L282">    this.participants = participants;</span>
+<span class="fc" id="L283">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

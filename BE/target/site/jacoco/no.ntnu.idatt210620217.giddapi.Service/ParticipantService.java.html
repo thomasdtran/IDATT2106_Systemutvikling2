@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParticipantService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">ParticipantService.java</span></div><h1>ParticipantService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import no.ntnu.idatt210620217.giddapi.model.Activity;
+import no.ntnu.idatt210620217.giddapi.model.Participant;
+import no.ntnu.idatt210620217.giddapi.model.ParticipantId;
+import no.ntnu.idatt210620217.giddapi.model.User;
+import no.ntnu.idatt210620217.giddapi.repo.ActivityRepo;
+import no.ntnu.idatt210620217.giddapi.repo.ParticipantRepo;
+import no.ntnu.idatt210620217.giddapi.repo.UserRepo;
+import no.ntnu.idatt210620217.giddapi.security.BasicUserDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.AccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.util.Iterator;
+import java.util.Set;
+
+/**
+ * Service class for Participant
+ */
+@Service
+<span class="fc" id="L25">public class ParticipantService {</span>
+
+    @Autowired
+    ActivityRepo activityRepo;
+    @Autowired
+    UserRepo userRepo;
+    @Autowired
+    ParticipantRepo participantRepo;
+
+    /** Method for signing up on an activity. Checks if user is already signed up for the activity or not.
+     * @param activity_id id of the activity.
+     * @param user_id id of the user.
+     * @return Http status code 200 if it works, else 400.
+     */
+    public ResponseEntity signUpToActivity(long activity_id, long user_id) throws AccessException {
+<span class="fc" id="L40">        Activity activity = activityRepo.findById(activity_id);</span>
+<span class="fc" id="L41">        User user = userRepo.findById(user_id);</span>
+<span class="fc" id="L42">        System.out.println(user.toString());</span>
+
+<span class="fc" id="L44">        BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if(authenticatedUser.getId() != user_id)</span>
+<span class="nc" id="L46">            throw new AccessException(&quot;Cannot add equipment if authenticated user is not organizer of activity&quot;);</span>
+
+        //Checks if user is participant or not
+<span class="fc" id="L49">        boolean isParticipant = isParticipant(activity, user);</span>
+
+        //Tries to add the user from the activity if it is not a participant.
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (!isParticipant) {</span>
+            try {
+                // Checks if there are more available spaces in activity
+<span class="fc bfc" id="L55" title="All 2 branches covered.">                if (activity.getParticipants().size() &lt; activity.getMaxParticipants()){</span>
+<span class="fc" id="L56">                    System.out.println(&quot;participants: &quot; + activity.getParticipants().size() + &quot; max: &quot; + activity.getMaxParticipants());</span>
+<span class="fc" id="L57">                    Participant participant = new Participant(user, activity, false);</span>
+<span class="fc" id="L58">                    participantRepo.save(participant);</span>
+<span class="fc" id="L59">                } else {</span>
+                    // checks if person already is on the waitinglist
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">                    if (!isOnWaitinglist(activity, user)){</span>
+<span class="fc" id="L62">                        activity.getWaitlist().add(user);</span>
+<span class="fc" id="L63">                        activity = activityRepo.save(activity);</span>
+<span class="fc" id="L64">                        System.out.println(&quot;list size: &quot; + activity.getWaitlist().size());</span>
+<span class="fc" id="L65">                        return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+                    }
+<span class="nc" id="L67">                    return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+
+                }
+<span class="fc" id="L70">                return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+
+<span class="nc" id="L72">            } catch (Exception e){</span>
+<span class="nc" id="L73">                e.printStackTrace();</span>
+<span class="nc" id="L74">                return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+            }
+        } else{
+<span class="fc" id="L77">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+
+    /**
+     * Method for updating waitlist when someone signs off an activity
+     * @param activity_id Id of activity to update waitlist for
+     */
+    private void updateWaitlist(long activity_id){
+<span class="fc" id="L86">        Activity activity = activityRepo.findById(activity_id);</span>
+<span class="fc" id="L87">        System.out.println(&quot;updates WAITLIST&quot;);</span>
+        // If the waitlist is empty there are no participants to bump up
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if (!activity.getWaitlist().isEmpty()){</span>
+            try{
+<span class="nc" id="L91">                User user = activity.getWaitlist().stream().findFirst().get();</span>
+<span class="nc" id="L92">                activity.getWaitlist().remove(user);</span>
+<span class="nc" id="L93">                activityRepo.save(activity);</span>
+<span class="nc" id="L94">                System.out.println(&quot;add user: &quot; + user.getId() + &quot; to participants&quot;);</span>
+<span class="nc" id="L95">                signUpToActivity(activity_id, user.getId());</span>
+<span class="nc" id="L96">            } catch (Exception e){</span>
+<span class="nc" id="L97">                e.printStackTrace();</span>
+<span class="nc" id="L98">            }</span>
+        }
+<span class="fc" id="L100">    }</span>
+    /**
+     * Method for signing off an activity. Checks if user is signed up for the activity or not.
+     * @param activity_id id of the activity.
+     * @param user_id id of the user.
+     * @return Http status code 200 if it works, else 400.
+     */
+    public ResponseEntity signOffActivity(long activity_id, long user_id) throws AccessException {
+<span class="fc" id="L108">        Activity activity = activityRepo.findById(activity_id);</span>
+<span class="fc" id="L109">        User user = userRepo.findById(user_id);</span>
+
+<span class="fc" id="L111">        BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if(authenticatedUser.getId() != user_id)</span>
+<span class="nc" id="L113">            throw new AccessException(&quot;Cannot add equipment if authenticated user is not organizer of activity&quot;);</span>
+
+        //System.out.println(participant.getUser().getEmail());
+        //Checks if user is participant or not
+<span class="fc" id="L117">        boolean isParticipant = isParticipant(activity, user);</span>
+
+        // checks if user is on waitinglist
+<span class="fc" id="L120">        boolean isWaiting = isOnWaitinglist(activity, user);</span>
+        //Tries to remove the user from the activity if it is a participant.
+<span class="pc bpc" id="L122" title="1 of 4 branches missed.">        if (isParticipant || isWaiting) {</span>
+            try {
+                // removes user from activity if the user is already on waitinglist
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">                if (isWaiting){</span>
+<span class="nc" id="L126">                    activity.getWaitlist().remove(user);</span>
+<span class="nc" id="L127">                    user.getMyWaitlists().remove(activity);</span>
+<span class="nc" id="L128">                    userRepo.save(user);</span>
+<span class="nc" id="L129">                    activityRepo.save(activity);</span>
+<span class="nc" id="L130">                    return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+                }
+                //Participant participant = participantRepo.findByActivityIdAndUserId(activity.getId(), user.getId());
+                //participantRepo.delete(participant);
+                //updateWaitlist(activity_id);
+<span class="fc" id="L135">                Participant participant = getParticipantFromActivity(activity, user.getId());</span>
+<span class="fc" id="L136">                activity.getParticipants().remove(participant);</span>
+<span class="fc" id="L137">                activityRepo.save(activity);</span>
+<span class="fc" id="L138">                updateWaitlist(activity_id);</span>
+<span class="fc" id="L139">                return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+<span class="nc" id="L140">            } catch (Exception e) {</span>
+<span class="nc" id="L141">                e.printStackTrace();</span>
+<span class="nc" id="L142">                return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+            }
+        } else {
+<span class="fc" id="L145">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+
+    /**
+     * Method for telling if user is on the activity's waiting list
+     * @param activity Activity object
+     * @param user User object
+     * @return A boolean value telling if user is on the activity's waiting list
+     */
+    private boolean isOnWaitinglist(Activity activity, User user){
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        for (User checkUser : activity.getWaitlist()) {</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">            if (checkUser.getId() == user.getId()) {</span>
+<span class="nc" id="L158">                return true;</span>
+            }
+<span class="fc" id="L160">        }</span>
+<span class="fc" id="L161">        return false;</span>
+    }
+
+    /**
+     * Method for telling if user is a participant of an activity
+     * @param activity Activity object
+     * @param user User object
+     * @return A boolean value telling if user is a participant of an activity
+     */
+    private boolean isParticipant(Activity activity, User user){
+<span class="fc" id="L171">        Set&lt;Participant&gt; participants = activity.getParticipants();</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        for(Participant participant : participants) {</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            if(participant.getUser().getId() == user.getId()) return true;</span>
+<span class="fc" id="L174">        }</span>
+<span class="fc" id="L175">        return false;</span>
+    }
+
+    /**
+     * Method for fetching a user from an activity
+     * @param activity Activity object
+     * @param userId Id of a user
+     * @return Returns a participant from a certain activity
+     */
+    private Participant getParticipantFromActivity(Activity activity, long userId) {
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">        for(Participant participant : activity.getParticipants()) {</span>
+<span class="pc bpc" id="L186" title="1 of 2 branches missed.">            if(participant.getUser().getId() == userId) return participant;</span>
+<span class="nc" id="L187">        }</span>
+<span class="nc" id="L188">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

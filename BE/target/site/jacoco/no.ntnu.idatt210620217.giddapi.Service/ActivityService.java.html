@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActivityService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">ActivityService.java</span></div><h1>ActivityService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import no.ntnu.idatt210620217.giddapi.controller.UserController;
+import no.ntnu.idatt210620217.giddapi.emailUtil.EmailService;
+import no.ntnu.idatt210620217.giddapi.model.Activity;
+import no.ntnu.idatt210620217.giddapi.model.Notification;
+import no.ntnu.idatt210620217.giddapi.model.Participant;
+import no.ntnu.idatt210620217.giddapi.model.Rating;
+import no.ntnu.idatt210620217.giddapi.model.User;
+import no.ntnu.idatt210620217.giddapi.notificationUtil.NotificationGenerator;
+import no.ntnu.idatt210620217.giddapi.repo.ActivityRepo;
+import no.ntnu.idatt210620217.giddapi.repo.ParticipantRepo;
+import no.ntnu.idatt210620217.giddapi.repo.UserRepo;
+import no.ntnu.idatt210620217.giddapi.security.BasicUserDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.expression.AccessException;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+
+/**
+ * Service class for Activity
+ * @version 1.0
+ */
+@Configuration
+@EnableScheduling
+@EnableAsync
+@Service
+<span class="fc" id="L45">public class ActivityService {</span>
+
+  @Autowired
+  private ActivityRepo activityRepo;
+  @Autowired
+  private UserRepo userRepo;
+  @Autowired
+  private ParticipantRepo participantRepo;
+  @Autowired
+  private EmailService emailService;
+  @Autowired
+  private NotificationService notificationService;
+
+<span class="fc" id="L58">  Logger logger = LoggerFactory.getLogger(ActivityService.class);</span>
+
+  /**
+   * Method for finding all activities. Calls method in Repo class.
+   * @return List with all activities.
+   */
+  public List&lt;Activity&gt; findAllActivities() {
+<span class="fc" id="L65">    return activityRepo.findAll();</span>
+  }
+
+  /**
+   * Method for finding activity by Id. Calls method in Repo class.
+   * @param id of the specific object
+   * @return The activity with this id or null if user does not exist
+   */
+  public Activity findActivityById(long id) {
+<span class="nc" id="L74">    return activityRepo.findById(id);</span>
+  }
+
+  /**
+   * Method for finding activities by specific title. Calls method in Repo class.
+   * @param title a specific title
+   * @return List with all activities with this title
+   */
+  public List&lt;Activity&gt; findActivityByTitle(String title) {
+<span class="fc" id="L83">    List&lt;Activity&gt; allActivities = activityRepo.findAll();</span>
+<span class="fc" id="L84">    List&lt;Activity&gt; foundActivities = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    for(int i = 0; i &lt; allActivities.size(); i ++){</span>
+<span class="fc" id="L87">      String s = allActivities.get(i).getTitle();</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">      if(s.contains(title)) {</span>
+<span class="fc" id="L89">        foundActivities.add(allActivities.get(i));</span>
+      }
+    }
+<span class="fc" id="L92">    return foundActivities;</span>
+  }
+
+  /**
+   * Method for creating new activity. Checks if the important information is provided. Calls method in Repo class.
+   * @param activity to be created
+   * @param organizerId of organizer of this activity
+   * @return created activity
+   */
+  public Activity createActivity(Activity activity, long organizerId) throws AccessException {
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">    if(!isValidOrganizer(organizerId)){</span>
+<span class="nc" id="L103">      return null; //organizer does not exist.</span>
+    }
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">    if (!isValidDate(activity.getDate())){</span>
+<span class="nc" id="L106">      return null; //date it wrong</span>
+<span class="pc bpc" id="L107" title="2 of 4 branches missed.">    } else if(!isValidTime(activity.getEndTime()) || !isValidTime(activity.getStartTime())){</span>
+<span class="nc" id="L108">      return null; //time is wrong</span>
+<span class="pc bpc" id="L109" title="4 of 8 branches missed.">    } else if(!hasInfo(activity.getTitle()) || !hasInfo(activity.getLocation()) || !hasInfo(activity.getSport()) || activity.getMaxParticipants()&lt;0){</span>
+<span class="nc" id="L110">      return null;//info is wrong</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">    } else if(!hasInfo(activity.getDescription())){</span>
+<span class="nc" id="L112">      activity.setDescription(&quot; &quot;); //description empty, add empty string ass descript</span>
+    }
+<span class="fc" id="L114">    User organizer = userRepo.findById(organizerId);</span>
+<span class="fc" id="L115">    activity.setOrganizer(organizer);</span>
+
+<span class="fc" id="L117">    BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">    if(authenticatedUser.getId() != activity.getOrganizer().getId())</span>
+<span class="nc" id="L119">      throw new AccessException(&quot;Cannot update activity when authenticated user is not organizer&quot;);</span>
+
+<span class="fc" id="L121">    activity = activityRepo.save(activity);</span>
+<span class="fc" id="L122">    Participant participant = new Participant(organizer, activity, false);</span>
+<span class="fc" id="L123">    participantRepo.save(participant);</span>
+
+<span class="fc" id="L125">    return activity;</span>
+  }
+
+  /**
+   * Method for updating an activity. Every if statement checks
+   * if the new information is different and not null before updating.
+   * Sends notification to the users for important changes
+   * @param newActivityData object with all the new information
+   * @param id of the activity to be updated
+   * @return updated activity or null if not valid info
+   */
+  public Activity updateActivity(Activity newActivityData, long id) throws AccessException {
+<span class="fc" id="L137">    Activity current = activityRepo.findById(id);</span>
+
+    //Prepares the title for the notification
+<span class="fc" id="L140">    String title = &quot;En aktivitet har blitt oppdatert&quot;;</span>
+<span class="fc" id="L141">    String path = &quot;#&quot;;</span>
+    
+    //checks if authenticated user is also organizer of activity
+<span class="fc" id="L144">    BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L145" title="2 of 4 branches missed.">    if(current != null &amp;&amp; authenticatedUser.getId() != current.getOrganizer().getId())</span>
+<span class="nc" id="L146">      throw new AccessException(&quot;Cannot update activity when authenticated user is not organizer&quot;);</span>
+
+<span class="pc bpc" id="L148" title="1 of 4 branches missed.">    if((!(current.getTitle().equals(newActivityData.getTitle()))) &amp;&amp; (newActivityData.getTitle()!=null)){</span>
+<span class="fc" id="L149">      current.setTitle(newActivityData.getTitle());</span>
+    }
+<span class="pc bpc" id="L151" title="1 of 4 branches missed.">    if((!(current.getDescription().equals(newActivityData.getDescription()))) &amp;&amp; (newActivityData.getDescription()!=null)){</span>
+<span class="fc" id="L152">      current.setDescription(newActivityData.getDescription());</span>
+    }
+<span class="pc bpc" id="L154" title="1 of 4 branches missed.">    if((!(current.getLocation().equals(newActivityData.getLocation()))) &amp;&amp; (newActivityData.getLocation()!=null)){</span>
+      // Sends notfication that the activity has changed its location
+<span class="fc" id="L156">      String desc = &quot;'&quot; + current.getTitle() + &quot;'&quot; + &quot; har byttet lokasjon til &quot; + newActivityData.getLocation();</span>
+<span class="fc" id="L157">      sendNotification(current, title, desc, path);</span>
+
+<span class="fc" id="L159">      current.setLocation(newActivityData.getLocation());</span>
+    }
+<span class="pc bpc" id="L161" title="3 of 4 branches missed.">    if((!(current.getLatitude()==(newActivityData.getLatitude()))) &amp;&amp; (newActivityData.getLatitude()!=0)){</span>
+<span class="nc" id="L162">      current.setLatitude(newActivityData.getLatitude());</span>
+    }
+<span class="pc bpc" id="L164" title="3 of 4 branches missed.">    if((!(current.getLongitude()==(newActivityData.getLongitude()))) &amp;&amp; (newActivityData.getLongitude()!=0)){</span>
+<span class="nc" id="L165">      current.setLongitude(newActivityData.getLongitude());</span>
+    }
+<span class="pc bpc" id="L167" title="1 of 4 branches missed.">    if((!(current.getDate().equals(newActivityData.getDate()))) &amp;&amp; (newActivityData.getDate()!=null)){</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">      if( isValidDate(newActivityData.getDate())){</span>
+<span class="fc" id="L169">        current.setDate(newActivityData.getDate());</span>
+      } else {
+<span class="fc" id="L171">        return null; //invalid date</span>
+      }
+    }
+<span class="pc bpc" id="L174" title="3 of 4 branches missed.">    if((!(current.getStartTime().equals(newActivityData.getStartTime()))) &amp;&amp; (newActivityData.getStartTime()!=null)){</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">      if( isValidTime(newActivityData.getStartTime())){</span>
+        //Sends notification that the starttime has changed
+<span class="nc" id="L177">        String desc = &quot;'&quot; + current.getTitle() + &quot;'&quot; + &quot; har byttet start tid til &quot; + newActivityData.getStartTime();</span>
+<span class="nc" id="L178">        sendNotification(current, title, desc, path);</span>
+
+<span class="nc" id="L180">        current.setStartTime(newActivityData.getStartTime());</span>
+<span class="nc" id="L181">      } else {</span>
+<span class="nc" id="L182">        return null; //invalid startTime</span>
+      }
+    }
+<span class="pc bpc" id="L185" title="3 of 4 branches missed.">    if((!(current.getEndTime().equals(newActivityData.getEndTime()))) &amp;&amp; (newActivityData.getEndTime()!=null)){</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">      if( isValidTime(newActivityData.getEndTime())){</span>
+        // Sends notification that the endtime has changed
+<span class="nc" id="L188">        String desc = &quot;'&quot; + current.getTitle() + &quot;'&quot; + &quot; har byttet slutt tid til &quot; + newActivityData.getEndTime();</span>
+<span class="nc" id="L189">        sendNotification(current, title, desc, path);</span>
+
+<span class="nc" id="L191">        current.setEndTime(newActivityData.getEndTime());</span>
+<span class="nc" id="L192">      } else {</span>
+<span class="nc" id="L193">        return null; //invalid endtime</span>
+      }
+    }
+<span class="pc bpc" id="L196" title="2 of 4 branches missed.">    if((!(current.getSport().equals(newActivityData.getSport()))) &amp;&amp; (newActivityData.getSport()!=null)){</span>
+<span class="fc" id="L197">      current.setSport(newActivityData.getSport());</span>
+    }
+<span class="pc bpc" id="L199" title="3 of 4 branches missed.">    if((!(current.getIntensity().equals(newActivityData.getIntensity()))) &amp;&amp; (newActivityData.getIntensity()!=null)){</span>
+<span class="nc" id="L200">      current.setIntensity(newActivityData.getIntensity());</span>
+    }
+<span class="pc bpc" id="L202" title="3 of 4 branches missed.">    if((!(current.getOrganizer().equals(newActivityData.getOrganizer()))) &amp;&amp; (newActivityData.getOrganizer()!=null)){</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">      if( isValidOrganizer(newActivityData.getOrganizer().getId())){</span>
+<span class="nc" id="L204">        current.setOrganizer(newActivityData.getOrganizer());</span>
+      } else {
+<span class="nc" id="L206">        return null; //invalid organizer</span>
+      }
+    }
+<span class="pc bpc" id="L209" title="3 of 4 branches missed.">    if((current.getMaxParticipants()!=newActivityData.getMaxParticipants()) &amp;&amp; (newActivityData.getMaxParticipants()!=0)){</span>
+<span class="nc" id="L210">      current.setMaxParticipants(newActivityData.getMaxParticipants());</span>
+    }
+<span class="fc" id="L212">    return activityRepo.save(current);</span>
+  }
+
+  /**
+   * Method for deleting an activity. This does not check if any users are connected to this activity.
+   * todo: check if it is safe to delete.
+   * @param id of the activity to be deleted
+   */
+  public void deleteActivity(long id) throws AccessException {
+<span class="fc" id="L221">    Activity activity = activityRepo.findById(id);</span>
+
+    //checks if authenticated user is also organizer of activity
+<span class="fc" id="L224">    BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L225" title="2 of 4 branches missed.">    if(activity != null &amp;&amp; authenticatedUser.getId() != activity.getOrganizer().getId())</span>
+<span class="nc" id="L226">      throw new AccessException(&quot;Cannot delete activity when authenticated user is not organizer&quot;);</span>
+
+    //Sends notfication that the activity is cancelled
+<span class="fc" id="L229">    String title = &quot;Aktivitet kansellert&quot;;</span>
+<span class="fc" id="L230">    String desc = &quot;Aktiviteten du meldte deg på med tittel '&quot; + activity.getTitle() + &quot;' er kanselert&quot;;</span>
+<span class="fc" id="L231">    String path = &quot;#&quot;;</span>
+<span class="fc" id="L232">    sendNotification(activity, title, desc, path);</span>
+        
+<span class="fc" id="L234">    activityRepo.deleteById(id);</span>
+<span class="fc" id="L235">  }</span>
+
+  /**
+   * Method for giving rating to organizer of activity
+   * @param activityId id of activity that organizer has organized
+   * @param userId id of user that is rating organizer
+   * @param rating rating to be given to organizer
+   */
+  public void createRating(long activityId, long userId, int rating) {
+<span class="fc" id="L244">    Activity activity = activityRepo.findById(activityId);</span>
+<span class="fc" id="L245">    User user = userRepo.findById(userId);</span>
+<span class="fc" id="L246">    Participant participant = getParticipantByUserId(activity.getParticipants(), userId);</span>
+
+<span class="pc bpc" id="L248" title="2 of 6 branches missed.">    if(activity == null || user == null || participant == null)</span>
+<span class="fc" id="L249">      throw new IllegalArgumentException(&quot;User, activity or participant was null&quot;);</span>
+
+<span class="pc bpc" id="L251" title="1 of 2 branches missed.">    if(participant.getHasRated())</span>
+<span class="nc" id="L252">      throw new IllegalArgumentException(&quot;User has already rated activity&quot;);</span>
+
+<span class="pc bpc" id="L254" title="2 of 4 branches missed.">    if(rating &gt; 5 || rating &lt; 1)</span>
+<span class="nc" id="L255">      throw new IllegalArgumentException(&quot;Invalid rating&quot;);</span>
+
+<span class="fc" id="L257">    User organizer = activity.getOrganizer();</span>
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">    if(organizer.getRating() == null) organizer.setRating(new Rating(organizer));</span>
+<span class="fc" id="L259">    organizer.getRating().addRating(rating);</span>
+<span class="fc" id="L260">    participant.setHasRated(true);</span>
+<span class="fc" id="L261">    activityRepo.save(activity);</span>
+<span class="fc" id="L262">  }</span>
+
+  /**
+   * Method for checking if the time is sumbitted in the format 00:00
+   * @param time to be checked
+   * @return boolean confirming if the time is formatted correct
+   */
+  public boolean isValidTime(String time){
+<span class="fc" id="L270">    String[] list = time.split(&quot;:&quot;);</span>
+<span class="pc bpc" id="L271" title="3 of 6 branches missed.">    if(list[0].length()!=2 || list[1].length()!=2 ||list.length&gt;2){</span>
+<span class="nc" id="L272">      return false;</span>
+<span class="pc bpc" id="L273" title="2 of 4 branches missed.">    } else if(Integer.parseInt(list[0])&gt;23 || Integer.parseInt(list[0])&lt;0){</span>
+<span class="nc" id="L274">      return false;</span>
+<span class="pc bpc" id="L275" title="2 of 4 branches missed.">    } else if(Integer.parseInt(list[1])&gt;59 || Integer.parseInt(list[1])&lt;0){</span>
+<span class="nc" id="L276">      return false;</span>
+    }
+<span class="fc" id="L278">    return true;</span>
+  }
+
+  /**
+   * Method for checking if the date is sumbitted in the format yyyy-mm-dd
+   * todo: sjekk dagens dato. Slik man ikke kan opprette arrangement på en dato som allerede har vært
+   * @param date to be checked
+   * @return boolean confirming if the date is formatted correct
+   */
+  public boolean isValidDate(String date){
+<span class="fc" id="L288">    String[] list = date.split(&quot;-&quot;);</span>
+<span class="pc bpc" id="L289" title="3 of 8 branches missed.">    if(list[0].length()!=4 || list[1].length()!=2 || list[2].length()!=2 || list.length&gt;3){</span>
+<span class="fc" id="L290">      return false;</span>
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">    } else if (Integer.parseInt(list[0])&lt; Year.now().getValue()){</span>
+<span class="nc" id="L292">      return false;</span>
+<span class="pc bpc" id="L293" title="2 of 4 branches missed.">    } else if (Integer.parseInt(list[1])&gt;12 || Integer.parseInt(list[1])&lt;0){</span>
+<span class="nc" id="L294">      return false;</span>
+<span class="pc bpc" id="L295" title="2 of 4 branches missed.">    }else if (Integer.parseInt(list[2])&gt;31 || Integer.parseInt(list[2])&lt;0){</span>
+<span class="nc" id="L296">      return false;</span>
+    }
+<span class="fc" id="L298">    return true;</span>
+  }
+
+  /**
+   * Method for checking if the object has info stored
+   * todo: meant for title, location, intensity and sport. These object may change and will need different checks.
+   * @param object object to be checked
+   * @return boolean confirming if the object has info
+   */
+  public boolean hasInfo(String object){
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">    return object != null;</span>
+  }
+
+  /**
+   * Method for checking if the object has info stored
+   * @param object object to be checked
+   * @return boolean confirming if the object has info
+   */
+  public boolean hasInfo(Object object){
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">    return object != null;</span>
+  }
+
+  /**
+   * Method for checking if the organizer is valid.
+   * todo: should perhaps check if they are logged in?
+   * @param organizerId object to be checked
+   * @return boolean confirming if the organizer is valid
+   */
+  public boolean isValidOrganizer(long organizerId){
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">    return userRepo.findById(organizerId) != null;</span>
+  }
+
+  /**
+   * Method for retrieving participant by user id
+   * @param participants List of all participants in an activity
+   * @param userId id of the user to find in list of participants
+   * @return participant with user id = userId
+   */
+  private Participant getParticipantByUserId(Set&lt;Participant&gt; participants, long userId) {
+<span class="fc bfc" id="L337" title="All 2 branches covered.">    for(Participant participant : participants) {</span>
+<span class="pc bpc" id="L338" title="1 of 2 branches missed.">      if(participant.getUser().getId() == userId) return participant;</span>
+<span class="nc" id="L339">    }</span>
+<span class="fc" id="L340">    return null;</span>
+  }
+
+  /**
+   * Scheduler method, watcher if an activity is over.
+   * Sends mail to participants when activity is over
+   */
+  @Async
+  @Scheduled(fixedRate = 60000) // In reality, should run every 15 min 900000ms
+  public void activityIsOverScheduler() {
+<span class="pc bpc" id="L350" title="1 of 2 branches missed.">    for (Activity activity : activityRepo.findAll()){</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">      if (!activity.isHasSendtEmailRequest()){</span>
+        // Dates for &quot;now-time&quot; and activity
+<span class="nc" id="L353">        LocalDate nowDate = LocalDate.now();</span>
+<span class="nc" id="L354">        LocalDate activityDate = LocalDate.parse(activity.getDate());</span>
+        // checks if activity day is before this months day
+<span class="nc bnc" id="L356" title="All 2 branches missed.">        if (!activityDate.isBefore(nowDate)){</span>
+          // checks if activity day is equal to today, and if activity (in hours) is less than &quot;now-time&quot;
+<span class="nc bnc" id="L358" title="All 4 branches missed.">          if (nowDate.equals(activityDate) &amp;&amp; LocalTime.parse(activity.getEndTime()).isBefore(LocalTime.now())){</span>
+<span class="nc" id="L359">            sendMailToParticipants(activity);</span>
+
+            //Prepares and sends the notification
+<span class="nc" id="L362">            String title = &quot;Rate aktivitet!&quot;;</span>
+<span class="nc" id="L363">            String desc = &quot;'&quot; + activity.getTitle() + &quot;'&quot; + &quot; er over, gjerne gi en rating!&quot;;</span>
+<span class="nc" id="L364">            String path = &quot;activity/&quot; + activity.getId();</span>
+<span class="nc" id="L365">            sendNotification(activity, title, desc, path);</span>
+<span class="nc" id="L366">          }</span>
+        } else {
+          // If activity-day of month is less than &quot;now-time&quot;-day of month
+<span class="nc" id="L369">          sendMailToParticipants(activity);</span>
+        }
+      }
+<span class="nc" id="L372">    }</span>
+<span class="fc" id="L373">  }</span>
+
+
+  /**
+   * Method for sending mail to participants of activity
+   * @param activity Activity that participants has attended to recieve email
+   */
+  private void sendMailToParticipants(Activity activity){
+<span class="nc bnc" id="L381" title="All 2 branches missed.">    for (Participant participant : activity.getParticipants()){</span>
+<span class="nc" id="L382">      sendMailForRating(participant.getUser().getEmail(), activity.getTitle(), activity.getId());</span>
+<span class="nc" id="L383">    }</span>
+<span class="nc" id="L384">    activity.setHasSendtEmailRequest(true);</span>
+<span class="nc" id="L385">    activityRepo.save(activity);</span>
+<span class="nc" id="L386">  }</span>
+
+  /**
+   * Method to send notifications to users connected to specific acitvities when
+   * the acitvities changes
+   * @param activity Activity that changed
+   * @param title Title of the notification
+   * @param desc Description of notification
+   */
+  private void sendNotification(Activity activity, String title, String desc, String path){
+<span class="fc" id="L396">    Set&lt;Participant&gt; participants = activity.getParticipants();</span>
+<span class="pc bpc" id="L397" title="1 of 2 branches missed.">    for (Participant participant : participants) {</span>
+<span class="nc bnc" id="L398" title="All 2 branches missed.">      if(participant.getUser().getId() == activity.getOrganizer().getId()){</span>
+<span class="nc" id="L399">        participants.remove(participant);</span>
+      }
+<span class="nc" id="L401">    }</span>
+<span class="fc" id="L402">    NotificationGenerator generator = new NotificationGenerator();</span>
+<span class="fc" id="L403">    Notification notification = generator.generate(title, desc, path);</span>
+<span class="fc" id="L404">    notificationService.createNotification(notification, participants);</span>
+<span class="fc" id="L405">  }</span>
+
+  /**
+   * Method for sending email including rating link
+   * @param email email of user to send email to
+   * @param activityName Name of activity
+   * @param activity_id Id of activity
+   */
+  private void sendMailForRating(String email, String activityName, long activity_id){
+<span class="nc" id="L414">    User user = userRepo.findUserByEmail(email);</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">    if (user == null) throw new NullPointerException(&quot;User with this email was not found&quot;);</span>
+<span class="nc" id="L416">    emailService.sendEmail(email, &quot;Gidd! varsler&quot;, &quot;Du var nettopp med på arrangementet &quot;+ activityName + &quot;. Vennligst gi en tilbakemelding til arrangøren ved å følge linken her! \n&quot; +</span>
+            &quot;http://localhost:8080/activity/&quot; + activity_id);
+<span class="nc" id="L418">  }</span>
+
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

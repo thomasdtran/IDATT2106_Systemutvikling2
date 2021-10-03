@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+Test set: no.ntnu.idatt210620217.giddapi.controller.UserControllerTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.301 s <<< FAILURE! - in no.ntnu.idatt210620217.giddapi.controller.UserControllerTest
+testCreateUser  Time elapsed: 0.001 s  <<< ERROR!
+org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.lang.NullPointerException
+	at no.ntnu.idatt210620217.giddapi.controller.UserControllerTest.testCreateUser(UserControllerTest.java:70)
+Caused by: java.lang.NullPointerException
+	at no.ntnu.idatt210620217.giddapi.controller.UserControllerTest.testCreateUser(UserControllerTest.java:70)
+

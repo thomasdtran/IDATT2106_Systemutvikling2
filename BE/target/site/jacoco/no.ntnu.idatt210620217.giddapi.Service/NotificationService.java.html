@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">NotificationService.java</span></div><h1>NotificationService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import no.ntnu.idatt210620217.giddapi.model.Notification;
+import no.ntnu.idatt210620217.giddapi.model.Participant;
+import no.ntnu.idatt210620217.giddapi.model.User;
+import no.ntnu.idatt210620217.giddapi.repo.NotificationRepo;
+import no.ntnu.idatt210620217.giddapi.repo.UserRepo;
+
+/**
+ * Service class for notifications
+ * @version 1.0
+ */
+@Service
+<span class="fc" id="L21">public class NotificationService {</span>
+    
+    @Autowired
+    private NotificationRepo notificationRepo;
+
+    @Autowired
+    private UserRepo userRepo;
+
+<span class="fc" id="L29">    Logger logger = LoggerFactory.getLogger(NotificationService.class);</span>
+
+    /**
+     * Method for retrieving all notifications from user
+     * @param userId Id of user to get all notifications from
+     * @return List with all notifications connected to user
+     */
+    public Set&lt;Notification&gt; getAllNotificationsForUser(long userId){
+        //Checks if the user exists 
+<span class="nc" id="L38">        User user = userRepo.findById(userId);</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if(user != null){</span>
+<span class="nc" id="L40">            Set&lt;Notification&gt; notifications = notificationRepo.findByUserId(userId);</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">            if(notifications != null){</span>
+<span class="nc" id="L42">                return notifications;</span>
+            }else{
+<span class="nc" id="L44">                logger.warn(&quot;No notifications found for user with id: &quot; + userId);</span>
+<span class="nc" id="L45">                return null;</span>
+            }
+        }else{
+<span class="nc" id="L48">            logger.error(&quot;User not found with id: &quot; + userId);</span>
+<span class="nc" id="L49">            return null;</span>
+        }
+        
+    }
+
+    /**
+     * Method for creating new notification
+     * @param notification Notification object to be created
+     * @param userId Id of user to recieve notification
+     * @return Notification
+     */
+    public Notification createNotification(Notification notification, long userId){
+        // Checks if the user exists
+<span class="fc" id="L62">        User user = userRepo.findById(userId);</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (user != null) {</span>
+<span class="nc" id="L64">            notification.setUser(user);</span>
+<span class="nc" id="L65">            return notificationRepo.save(notification);</span>
+        } else {
+<span class="fc" id="L67">            logger.error(&quot;User not found with id: &quot; + userId);</span>
+<span class="fc" id="L68">            return null;</span>
+        }
+        
+    }
+
+    /**
+     * Method to send notification to more people at the same time
+     * @param notification Notification object to be created
+     * @param participants Participants of activity to recieve notification
+     */
+    public void createNotification(Notification notification, Set&lt;Participant&gt; participants) {
+<span class="pc bpc" id="L79" title="3 of 4 branches missed.">        if(!(participants.isEmpty()) &amp;&amp; (participants != null)){</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            for (Participant participant : participants) {</span>
+<span class="nc" id="L81">                User user = participant.getUser();</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                if (user != null) {</span>
+<span class="nc" id="L83">                    notification.setUser(user);</span>
+<span class="nc" id="L84">                    notificationRepo.save(notification);</span>
+                } else {
+<span class="nc" id="L86">                    logger.error(&quot;User not found&quot;);</span>
+                }
+<span class="nc" id="L88">            }</span>
+        }else{
+<span class="fc" id="L90">            logger.error(&quot;Participant list is empty or null&quot;);</span>
+        }
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Method for marking notification as read
+     * @param notificationId Id of notification to be marked as read
+     * @return Notification
+     */
+    public Notification markAsRead(long notificationId){
+<span class="nc" id="L100">        Notification notification = notificationRepo.findById(notificationId);</span>
+
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if(notification != null){</span>
+<span class="nc" id="L103">            notification.markAsRead();</span>
+<span class="nc" id="L104">            return notificationRepo.save(notification);</span>
+        }else{
+<span class="nc" id="L106">            logger.error(&quot;Notification not found with id: &quot; + notificationId);</span>
+<span class="nc" id="L107">            return null;</span>
+        }        
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

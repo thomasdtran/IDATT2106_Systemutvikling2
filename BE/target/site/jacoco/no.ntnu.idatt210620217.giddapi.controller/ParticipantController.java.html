@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParticipantController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.controller</a> &gt; <span class="el_source">ParticipantController.java</span></div><h1>ParticipantController.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.controller;
+
+
+import no.ntnu.idatt210620217.giddapi.Service.ParticipantService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.AccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/api/v1/participants&quot;)
+@CrossOrigin
+<span class="fc" id="L15">public class ParticipantController {</span>
+
+    @Autowired
+    private ParticipantService participantService;
+
+    /**
+     * Method for signing up for an activity. Calls method in service class.
+     * @param activity_id of the activity to sign up on.
+     * @param user_id of the user who want to sign up on the activity.
+     * @return Http status code 200 if it works, else 400.
+     */
+    @PostMapping(&quot;/{activity_id}/{user_id}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity signUpToActivity(@PathVariable long activity_id, @PathVariable long user_id){
+        try {
+<span class="fc" id="L30">            return participantService.signUpToActivity(activity_id, user_id);</span>
+<span class="nc" id="L31">        } catch (AccessException accessException) {</span>
+<span class="nc" id="L32">            return new ResponseEntity&lt;&gt;(HttpStatus.FORBIDDEN);</span>
+        }
+    }
+
+    /**
+     * Method for signing off an activity. Calls method in service class.
+     * @param activity_id id of the activity.
+     * @param user_id id of the user.
+     * @return Http status code 200 if it works, else 400.
+     */
+    @DeleteMapping(&quot;/{activity_id}/{user_id}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; signOffActivity(@PathVariable long activity_id, @PathVariable long user_id){
+        try {
+<span class="fc" id="L46">            return participantService.signOffActivity(activity_id, user_id);</span>
+<span class="nc" id="L47">        } catch (AccessException accessException) {</span>
+<span class="nc" id="L48">            return new ResponseEntity&lt;&gt;(HttpStatus.FORBIDDEN);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+Test set: no.ntnu.idatt210620217.giddapi.controller.EquipmentControllerTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.869 s <<< FAILURE! - in no.ntnu.idatt210620217.giddapi.controller.EquipmentControllerTest
+whenAddNewEquipmentToActicity_thenReturnEquipment  Time elapsed: 0.001 s  <<< ERROR!
+org.springframework.orm.jpa.JpaObjectRetrievalFailureException: Unable to find no.ntnu.idatt210620217.giddapi.model.User with id 1; nested exception is javax.persistence.EntityNotFoundException: Unable to find no.ntnu.idatt210620217.giddapi.model.User with id 1
+	at no.ntnu.idatt210620217.giddapi.controller.EquipmentControllerTest.setUp(EquipmentControllerTest.java:74)
+Caused by: javax.persistence.EntityNotFoundException: Unable to find no.ntnu.idatt210620217.giddapi.model.User with id 1
+	at no.ntnu.idatt210620217.giddapi.controller.EquipmentControllerTest.setUp(EquipmentControllerTest.java:74)
+

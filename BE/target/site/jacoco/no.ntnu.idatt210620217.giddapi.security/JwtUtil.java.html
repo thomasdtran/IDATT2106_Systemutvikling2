@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.security</a> &gt; <span class="el_source">JwtUtil.java</span></div><h1>JwtUtil.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+/**
+ * class for doing operations on jwt tokens
+ */
+@Service
+<span class="fc" id="L19">public class JwtUtil {</span>
+    @Value(&quot;${api.secret}&quot;)
+    private String SECRET_KEY;
+
+    /**
+     * Method for extracting username from token
+     * @param token the token the username will be extracted from
+     * @return username
+     */
+    public String extractUsername(String token) {
+<span class="fc" id="L29">        return extractClaim(token, Claims::getSubject);</span>
+    }
+
+    /**
+     * Method for extracting expiration time from token
+     * @param token the token that expiration will be extracted from
+     * @return the time the token expires
+     */
+    public Date extractExpiration(String token) {
+<span class="fc" id="L38">        return extractClaim(token, Claims::getExpiration);</span>
+    }
+
+    /**
+     * Method for extracting given claim from a token
+     * @param token tokem to extract claim from
+     * @param claimsResolver
+     * @param &lt;T&gt;
+     * @return claim
+     */
+    public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
+<span class="fc" id="L49">        final Claims claims = extractAllClaims(token);</span>
+<span class="fc" id="L50">        return claimsResolver.apply(claims);</span>
+    }
+
+    /**
+     * Method for extracting all claims from a token
+     * @param token the token to extract claims from
+     * @return all claims
+     */
+    private Claims extractAllClaims(String token) {
+<span class="fc" id="L59">        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();</span>
+    }
+
+    /**
+     * Method to check if token has expired
+     * @param token the token that will be checked
+     * @return if token is expired
+     */
+    private Boolean isTokenExpired(String token) {
+<span class="fc" id="L68">        return extractExpiration(token).before(new Date());</span>
+    }
+
+    /**
+     * Method for generating token with userDetails
+     * @param userDetails the user the token will belong to
+     * @return the newly generated token
+     */
+    public String generateToken(UserDetails userDetails) {
+<span class="fc" id="L77">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L78">        return Jwts.builder().setClaims(claims).setSubject(userDetails.getUsername()).setIssuedAt(new Date(System.currentTimeMillis()))</span>
+<span class="fc" id="L79">                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))</span>
+<span class="fc" id="L80">                .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();</span>
+    }
+
+    /**
+     * Method for validating token
+     * @param token token to be checked if is valid
+     * @param userDetails the reference to check if is valid
+     * @return if is valid token
+     */
+    public Boolean validateToken(String token, UserDetails userDetails) {
+<span class="fc" id="L90">        final String username = extractUsername(token);</span>
+<span class="pc bpc" id="L91" title="2 of 4 branches missed.">        return (username.equals(userDetails.getUsername()) &amp;&amp; !isTokenExpired(token));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

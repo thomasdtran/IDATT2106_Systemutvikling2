@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.controller;
+
+import no.ntnu.idatt210620217.giddapi.model.AuthenticationRequest;
+import no.ntnu.idatt210620217.giddapi.model.AuthenticationResponse;
+import no.ntnu.idatt210620217.giddapi.model.User;
+import no.ntnu.idatt210620217.giddapi.security.BasicUserDetails;
+import no.ntnu.idatt210620217.giddapi.security.JwtUtil;
+import no.ntnu.idatt210620217.giddapi.security.MyUserDetailsService;
+import no.ntnu.idatt210620217.giddapi.Service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.AccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.NoSuchElementException;
+
+@RestController
+@RequestMapping(&quot;/api/v1/users&quot;)
+@CrossOrigin
+<span class="fc" id="L28">public class UserController {</span>
+    @Autowired
+    private AuthenticationManager authenticationmanager;
+    @Autowired
+    private MyUserDetailsService userDetailsService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    UserService userService;
+
+
+<span class="fc" id="L39">    Logger logger = LoggerFactory.getLogger(UserController.class);</span>
+
+    /**
+     * PostMapping for creating user
+     * @param user RequestBody from client
+     * @return user and HttpStatus.CREATED or HttpStatus.BAD_REQUEST
+     */
+    @PostMapping
+    public ResponseEntity&lt;?&gt; createUser(@RequestBody User user) {
+        try {
+<span class="nc" id="L49">            User user1 = userService.createUser(user);</span>
+<span class="nc" id="L50">            logger.info(&quot;User was created&quot;);</span>
+<span class="nc" id="L51">            return new ResponseEntity&lt;&gt;(user1, HttpStatus.CREATED);</span>
+<span class="nc" id="L52">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L53">            logger.info(e.getMessage());</span>
+<span class="nc" id="L54">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+        }
+    }
+
+    /**
+     * GetMapping for finding user by id
+     * @param id PathVariable from client
+     * @return user and HttpStatus.OK or HttpStatus.BAD_REQUEST
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; findUserById(@PathVariable long id) {
+        try {
+<span class="fc" id="L67">            Object user = userService.findUserById(id);</span>
+<span class="fc" id="L68">            logger.info(&quot;Found user with id: &quot; + id);</span>
+<span class="fc" id="L69">            return new ResponseEntity&lt;&gt;(user, HttpStatus.OK);</span>
+<span class="nc" id="L70">        } catch (NoSuchElementException e) {</span>
+<span class="nc" id="L71">            logger.info(e.getMessage());</span>
+<span class="nc" id="L72">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+<span class="nc" id="L73">        } catch (AccessException e) {</span>
+<span class="nc" id="L74">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());</span>
+        }
+    }
+
+    /**
+     * GetMapping for getting list of specific user info
+     * @return list with specific user info and HttpStatus.OK if all ok or BAD_REQUEST
+     */
+    @GetMapping
+    public ResponseEntity&lt;?&gt; getUserAndTotalPoints() {
+<span class="fc" id="L84">        return new ResponseEntity&lt;&gt;(userService.getUsersAndTotalPoints(), HttpStatus.OK);</span>
+    }
+
+    /**
+     * PutMapping for updating user info
+     * @param user, Requesting Body with new user info
+     * @param id, users id, PathVariable from client
+     * @return user and HttpStatus.OK if all ok or BAD_REQUEST if wrong input from user
+     */
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; updateUser(@RequestBody User user, @PathVariable long id) {
+        try {
+<span class="fc" id="L97">            User updatedUser = userService.updateUser(user, id);</span>
+<span class="fc" id="L98">            logger.info(&quot;Updated user with id: &quot; + id);</span>
+<span class="fc" id="L99">            return new ResponseEntity&lt;&gt;(updatedUser, HttpStatus.OK);</span>
+<span class="fc" id="L100">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L101">            logger.info(e.getMessage());</span>
+<span class="fc" id="L102">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+<span class="nc" id="L103">        } catch (AccessException e) {</span>
+<span class="nc" id="L104">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());</span>
+        }
+    }
+
+    /**
+     * DeleteMapping for deleting a user
+     * @param id, PathVariable which is the users id
+     * @return
+     */
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; deleteUser(@PathVariable long id) {
+        try {
+<span class="fc" id="L118">            userService.deleteUser(id);</span>
+<span class="fc" id="L119">            logger.info(&quot;Deleted user with id: &quot; + id);</span>
+<span class="fc" id="L120">            return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+<span class="nc" id="L121">        } catch (NoSuchElementException e) {</span>
+<span class="nc" id="L122">            logger.info(e.getMessage());</span>
+<span class="nc" id="L123">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+<span class="nc" id="L124">        } catch (AccessException e) {</span>
+<span class="nc" id="L125">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());</span>
+        }
+    }
+
+    /**
+     * Post mapping to authorise a user and get an authorisation-token in return
+     * @param authenticationRequest request body containing email and password
+     * @return the token used to authorise access in later requests
+     * @throws Exception
+     */
+    @PostMapping(&quot;/authenticate&quot;)
+    public ResponseEntity&lt;?&gt; createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+        try {
+<span class="fc" id="L138">            authenticationmanager.authenticate(</span>
+<span class="fc" id="L139">                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())</span>
+            );
+<span class="nc" id="L141">        } catch (BadCredentialsException e) {</span>
+<span class="nc" id="L142">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;Wrong username or password&quot;);</span>
+<span class="fc" id="L143">        }</span>
+
+<span class="fc" id="L145">        BasicUserDetails userDetails = (BasicUserDetails) userDetailsService.loadUserByUsername(authenticationRequest.getUsername());</span>
+<span class="fc" id="L146">        String jwt = jwtUtil.generateToken(userDetails);</span>
+<span class="fc" id="L147">        return ResponseEntity.ok(new AuthenticationResponse(jwt, userDetails.getId()));</span>
+    }
+
+    /**
+     * Method for confirming if password sent by user is equal to password in database
+     * @param id id og user sending password
+     * @param user The user sending the password
+     * @return 200 if ok, 400 if not
+     */
+    @PostMapping(&quot;/{id}/confirm-password&quot;)
+    public ResponseEntity&lt;?&gt; confirmPassword(@PathVariable long id, @RequestBody User user) {
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if(userService.confirmPassword(id, user.getPassword()))</span>
+<span class="nc" id="L159">            return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+        else
+<span class="nc" id="L161">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+    }
+
+    /**
+     * @param user User object
+     * @return returns and error code of ok if password is changed
+     */
+    @PostMapping(&quot;/recover-password&quot;)
+    public ResponseEntity&lt;?&gt; recoverPassword(@RequestBody User user) {
+        try {
+<span class="nc" id="L171">            userService.recoverPassword(user.getEmail());</span>
+<span class="nc" id="L172">            logger.info(&quot;Password changed for user&quot;);</span>
+<span class="nc" id="L173">            return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+<span class="nc" id="L174">        } catch (Exception e) {</span>
+<span class="nc" id="L175">            e.printStackTrace();</span>
+<span class="nc" id="L176">            logger.info(&quot;Password could not change for user&quot;);</span>
+<span class="nc" id="L177">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">SportService.java</span></div><h1>SportService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import no.ntnu.idatt210620217.giddapi.model.Sport;
+import no.ntnu.idatt210620217.giddapi.repo.SportRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+
+/**
+ * Service class for sport service
+ */
+@Service
+<span class="fc" id="L15">public class SportService {</span>
+    @Autowired
+    private SportRepo sportRepo;
+
+    /**
+     * Method for creating a sport
+     * @param sport Object of sport to be created
+     * @return the sport created or throw exception if input is wrong
+     */
+    public Sport createSport(Sport sport) {
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">        if(!isLetters(sport.getType())) {</span>
+<span class="nc" id="L26">            throw new IllegalArgumentException(&quot;Sport type must only contain letters.&quot;);</span>
+        }
+<span class="fc" id="L28">        return sportRepo.save(sport);</span>
+    }
+
+    /**
+     * Method for finding sport by id
+     * @param id the id of sport you want to find
+     * @return the sport found or throw exception if the sport doesn't exist
+     */
+    public Sport findSportById(long id) {
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if(sportRepo.findById(id) == null) {</span>
+<span class="nc" id="L38">            throw new NoSuchElementException(&quot;Sport with this id: &quot; + id + &quot; does not exist&quot;);</span>
+        }
+<span class="fc" id="L40">        return sportRepo.findById(id);</span>
+    }
+
+    /**
+     * Method for updating sport type
+     * @param newSportType sport object containing the new type
+     * @param id of the sport you want to change
+     * @return the sport object with the new type or throw exception if input is wrong
+     */
+    public Sport updateSport(Sport newSportType, long id) {
+<span class="fc" id="L50">        Sport current = findSportById(id);</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">        if(current == null) {</span>
+<span class="nc" id="L52">            throw new NoSuchElementException();</span>
+<span class="pc bpc" id="L53" title="3 of 6 branches missed.">        } else if (newSportType.getType() == null || newSportType.getType() == &quot;&quot; || !isLetters(newSportType.getType())) {</span>
+<span class="nc" id="L54">            throw new IllegalArgumentException(&quot;Sport type must contain only letters and can not be empty&quot;);</span>
+        }
+<span class="fc" id="L56">        current.setType(newSportType.getType());</span>
+<span class="fc" id="L57">        return sportRepo.save(current);</span>
+    }
+
+    /**
+     * Method for finding all sports
+     * @return all sports
+     */
+    public List&lt;Sport&gt; findAllSports() {
+<span class="fc" id="L65">        return sportRepo.findAll();</span>
+    }
+
+    /**
+     * Method for deleting a sport
+     * @param id of the sport you want to delete
+     * @return true if the sport is deleted or throw exception if the sport is not found
+     */
+    public boolean deleteSport(long id) {
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if(findSportById(id) == null) {</span>
+<span class="nc" id="L75">            throw new NoSuchElementException(&quot;Sport with this id: &quot; + id + &quot; does not exist&quot;);</span>
+        }
+<span class="fc" id="L77">        sportRepo.deleteById(id);</span>
+<span class="fc" id="L78">        return true;</span>
+    }
+    /**
+     * Method used to check if sport type contains only letters
+     * @param name, sport
+     * @return boolean saying if the input is valid
+     */
+    public boolean isLetters(String name) {
+<span class="fc" id="L86">        char[] chars = name.toCharArray();</span>
+
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        for (char c : chars) {</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">            if(!Character.isLetter(c)) {</span>
+<span class="nc" id="L90">                return false;</span>
+            }
+        }
+<span class="fc" id="L93">        return true;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

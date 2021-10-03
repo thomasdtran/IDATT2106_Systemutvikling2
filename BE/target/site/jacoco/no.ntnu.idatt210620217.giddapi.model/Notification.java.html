@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Notification.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.model</a> &gt; <span class="el_source">Notification.java</span></div><h1>Notification.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.model;
+
+import java.util.Set;
+
+import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Entity
+@Table(name=&quot;notification&quot;)
+/**
+ * Class for Activity and database setup
+ * @version 1.0
+ */
+public class Notification {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+    @Column(name = &quot;title&quot;)
+    private String title;
+
+    @Column(name = &quot;description&quot;)
+    private String description;
+
+    @Column(name = &quot;sent_date&quot;)
+    private String date;
+
+    @Column(name = &quot;sent_time&quot;)
+    private String time;
+    
+    @Column(name = &quot;is_read&quot;)
+    private boolean read;
+
+    @Column(name =&quot;path&quot;)
+    private String path;
+
+    @ManyToOne
+    @JoinColumn(name=&quot;user_id&quot;, nullable = false)
+    @JsonIgnore
+    private User user;
+
+    /**
+     * Empty constructor
+     */
+<span class="fc" id="L46">    public Notification(){}</span>
+
+    /**
+     * Constructor
+     * @param title Title of notification
+     * @param description Desciption of notification
+     * @param date Date of when notification is issued
+     * @param time Time of when notification is issued
+     * @param user User to issue notification to
+     */
+<span class="fc" id="L56">    public Notification(String title, String description, String date, String time, User user){</span>
+<span class="fc" id="L57">        this.title = title;</span>
+<span class="fc" id="L58">        this.description = description;</span>
+<span class="fc" id="L59">        this.date = date;</span>
+<span class="fc" id="L60">        this.time = time;</span>
+<span class="fc" id="L61">        this.read = false;</span>
+<span class="fc" id="L62">        this.user = user;</span>
+
+<span class="fc" id="L64">    }</span>
+
+    /**
+     * Constructor for notification with path instead of user
+     * @param title Title of notification
+     * @param description Desciption of notification
+     * @param date Date of when notification is issued
+     * @param time Time of when notification is issued
+     * @param path Link for user to press in notification
+     */
+<span class="fc" id="L74">    public Notification(String title, String description, String date, String time, String path) {</span>
+<span class="fc" id="L75">        this.title = title;</span>
+<span class="fc" id="L76">        this.description = description;</span>
+<span class="fc" id="L77">        this.date = date;</span>
+<span class="fc" id="L78">        this.time = time;</span>
+<span class="fc" id="L79">        this.read = false;</span>
+<span class="fc" id="L80">        this.path = path;</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * Getters and setters
+     */
+    public long getId() {
+<span class="fc" id="L87">        return id;</span>
+    }
+    public String getTitle() {
+<span class="fc" id="L90">        return title;</span>
+    }
+    public String getDescription() {
+<span class="fc" id="L93">        return description;</span>
+    }
+    public String getDate() {
+<span class="fc" id="L96">        return date;</span>
+    }
+    public String getTime() {
+<span class="fc" id="L99">        return time;</span>
+    }
+    
+    public boolean getRead(){
+<span class="fc" id="L103">        return this.read;</span>
+    }
+
+    public User getUser() {
+<span class="nc" id="L107">        return user;</span>
+    }
+    public String getPath() {
+<span class="fc" id="L110">        return path;</span>
+    }
+
+    public boolean isRead() {
+<span class="nc" id="L114">        return read;</span>
+    }
+
+    public void setRead(boolean read) {
+<span class="fc" id="L118">        this.read = read;</span>
+<span class="fc" id="L119">    }</span>
+
+    public void setUser(User user) {
+<span class="nc" id="L122">        this.user = user;</span>
+<span class="nc" id="L123">    }</span>
+
+    public void markAsRead(){
+<span class="nc" id="L126">        this.read = true;</span>
+<span class="nc" id="L127">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.model</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.model;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import org.hibernate.annotations.NaturalIdCache;
+
+import javax.persistence.*;
+import java.util.*;
+
+@Entity
+@Table(name = &quot;user&quot;)
+@NaturalIdCache
+/**
+ * Class for User and database setup
+ * @version 1.0
+ */
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;id&quot;)
+    private long id;
+    @Column(name=&quot;firstname&quot;)
+    private String firstname;
+    @Column(name=&quot;lastname&quot;)
+    private String lastname;
+    @Column(name=&quot;email&quot;, unique=true)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String email;
+    @Column(name=&quot;password&quot;)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+    @Column(name=&quot;gender&quot;)
+    private String gender;
+    @Column(name=&quot;city&quot;)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String city;
+    @Column(name=&quot;birthyear&quot;)
+    private short birthyear;
+
+    @JsonIgnore
+    @OneToMany(mappedBy=&quot;user&quot;, fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.PERSIST)
+    private Set&lt;Participant&gt; participants;
+
+    @JsonIgnore
+    @OneToMany(mappedBy=&quot;organizer&quot;, orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set&lt;Activity&gt; organizing;
+    
+    @OneToMany(
+        mappedBy = &quot;equipment&quot;, 
+        cascade = CascadeType.ALL, 
+        orphanRemoval = true)
+    @JsonIgnore
+    private Set&lt;EquipmentUser&gt; equipmentUsers;
+
+    //Creates many to many relation table with waitlist
+<span class="fc" id="L58">    @ManyToMany(mappedBy = &quot;waitlist&quot;)</span>
+    @JsonIgnore
+    private Collection&lt;Activity&gt; myWaitlists = new LinkedList&lt;&gt;();
+
+    @OneToOne(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL)
+    @PrimaryKeyJoinColumn
+    private Rating rating;
+
+    @Column(name = &quot;totalPoints&quot;)
+    private int totalPoints;
+
+    @OneToMany(mappedBy = &quot;user&quot;)
+    private Set&lt;Notification&gt; notifications;
+
+    /**
+     * Empty class constructor
+     */
+<span class="fc" id="L75">    public User() {</span>
+<span class="fc" id="L76">    }</span>
+    /**
+     * Class constructor for User
+     * @param id Id of user
+     * @param firstname Firstname of user
+     * @param lastname Lastname of user
+     * @param email Email of user
+     * @param password Password of user
+     * @param gender Gender of user
+     * @param city City user lives in
+     * @param birthyear Birthyear of user
+     */
+<span class="fc" id="L88">    public User(long id, String firstname, String lastname, String email, String password, String gender, String city, short birthyear) {</span>
+<span class="fc" id="L89">        this.id = id;</span>
+<span class="fc" id="L90">        this.firstname = firstname;</span>
+<span class="fc" id="L91">        this.lastname = lastname;</span>
+<span class="fc" id="L92">        this.email = email;</span>
+<span class="fc" id="L93">        this.password = password;</span>
+<span class="fc" id="L94">        this.gender = gender;</span>
+<span class="fc" id="L95">        this.city = city;</span>
+<span class="fc" id="L96">        this.birthyear = birthyear;</span>
+<span class="fc" id="L97">        this.totalPoints = 0;</span>
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * Getters and setters
+     */
+    public long getId() {
+<span class="fc" id="L104">        return id;</span>
+    }
+
+    public void setId(long id) {
+<span class="fc" id="L108">        this.id = id;</span>
+<span class="fc" id="L109">    }</span>
+
+    public String getFirstname() {
+<span class="fc" id="L112">        return firstname;</span>
+    }
+
+    public void setFirstname(String firstname) {
+<span class="fc" id="L116">        this.firstname = firstname;</span>
+<span class="fc" id="L117">    }</span>
+
+    public String getLastname() {
+<span class="fc" id="L120">        return lastname;</span>
+    }
+
+    public void setLastname(String lastname) {
+<span class="fc" id="L124">        this.lastname = lastname;</span>
+<span class="fc" id="L125">    }</span>
+
+    public String getEmail() {
+<span class="fc" id="L128">        return email;</span>
+    }
+
+    public void setEmail(String email) {
+<span class="nc" id="L132">        this.email = email;</span>
+<span class="nc" id="L133">    }</span>
+
+    public String getPassword() {
+<span class="fc" id="L136">        return password;</span>
+    }
+
+    public void setPassword(String password) {
+<span class="nc" id="L140">        this.password = password;</span>
+<span class="nc" id="L141">    }</span>
+
+    public String getGender() {
+<span class="fc" id="L144">        return gender;</span>
+    }
+
+    public void setGender(String gender) {
+<span class="fc" id="L148">        this.gender = gender;</span>
+<span class="fc" id="L149">    }</span>
+
+    public String getCity() {
+<span class="fc" id="L152">        return city;</span>
+    }
+
+    public void setCity(String city) {
+<span class="nc" id="L156">        this.city = city;</span>
+<span class="nc" id="L157">    }</span>
+
+    public short getBirthyear() {
+<span class="fc" id="L160">        return birthyear;</span>
+    }
+
+    public void setBirthyear(short birthyear) {
+<span class="fc" id="L164">        this.birthyear = birthyear;</span>
+<span class="fc" id="L165">    }</span>
+
+    public Set&lt;EquipmentUser&gt; getEquipmentUsers() {
+<span class="nc" id="L168">        return equipmentUsers;</span>
+    }
+
+    public int getTotalPoints() {
+<span class="fc" id="L172">        return totalPoints;</span>
+    }
+
+    public void setTotalPoints(int totalPoints) {
+<span class="fc" id="L176">        this.totalPoints = totalPoints;</span>
+<span class="fc" id="L177">    }</span>
+
+    public Collection&lt;Activity&gt; getMyWaitlists() {
+<span class="nc" id="L180">        return myWaitlists;</span>
+    }
+    public void setMyWaitlists(Collection&lt;Activity&gt; myWaitlists) {
+<span class="nc" id="L183">        this.myWaitlists = myWaitlists;</span>
+<span class="nc" id="L184">    }</span>
+
+    public Set&lt;Participant&gt; getParticipants() {
+<span class="nc" id="L187">        return participants;</span>
+    }
+
+    public void setParticipants(Set&lt;Participant&gt; participants) {
+<span class="nc" id="L191">        this.participants = participants;</span>
+<span class="nc" id="L192">    }</span>
+
+    @Override
+    public String toString() {
+<span class="fc" id="L196">        return &quot;User{&quot; +</span>
+                &quot;id=&quot; + id +
+                &quot;, firstname='&quot; + firstname + '\'' +
+                &quot;, lastname='&quot; + lastname + '\'' +
+                &quot;, email='&quot; + email + '\'' +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="pc bpc" id="L206" title="1 of 2 branches missed.">        if (this == o)</span>
+<span class="nc" id="L207">            return true;</span>
+<span class="pc bpc" id="L208" title="2 of 4 branches missed.">        if (o == null || getClass() != o.getClass())</span>
+<span class="nc" id="L209">            return false;</span>
+<span class="fc" id="L210">        User user = (User) o;</span>
+<span class="pc bpc" id="L211" title="2 of 4 branches missed.">        return Objects.equals(this.firstname, user.firstname) &amp;&amp; Objects.equals(this.lastname, user.lastname);</span>
+    }
+
+    public Rating getRating() {
+<span class="fc" id="L215">        return rating;</span>
+    }
+
+    public void setRating(Rating rating) {
+<span class="fc" id="L219">        this.rating = rating;</span>
+<span class="fc" id="L220">    }</span>
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L224">        return Objects.hash(this.firstname, this.lastname);</span>
+    }
+
+    @JsonIgnore
+    public Object getPrivateUser() {
+<span class="fc" id="L229">        return new PrivateUser(id, firstname, lastname, email, password, gender, city, birthyear, rating, totalPoints);</span>
+    }
+}
+
+/**
+ * Class for privateUser
+ * @version 1.0
+ */
+class PrivateUser {
+    private long id;
+    private String firstname;
+    private String lastname;
+    private String email;
+    private String password;
+    private String gender;
+    private String city;
+    private short birthyear;
+    private Rating rating;
+    private int totalPoints;
+
+    /**
+     * Getters
+     */
+    public long getId() {
+<span class="fc" id="L253">        return id;</span>
+    }
+    public String getFirstname() {
+<span class="fc" id="L256">        return firstname;</span>
+    }
+    public String getLastname() {
+<span class="fc" id="L259">        return lastname;</span>
+    }
+    public String getEmail() {
+<span class="fc" id="L262">        return email;</span>
+    }
+    public String getPassword() {
+<span class="fc" id="L265">        return password;</span>
+    }
+    public String getGender() {
+<span class="fc" id="L268">        return gender;</span>
+    }
+    public String getCity() {
+<span class="fc" id="L271">        return city;</span>
+    }
+    public short getBirthyear() {
+<span class="fc" id="L274">        return birthyear;</span>
+    }
+    public Rating getRating() {
+<span class="fc" id="L277">        return rating;</span>
+    }
+    public int getTotalPoints() {
+<span class="fc" id="L280">        return totalPoints;</span>
+    }
+
+    /**
+     * Constructor for Private user
+     * @param id Id of user
+     * @param firstname Firstname of user
+     * @param lastname Lastname of user
+     * @param email Email of user
+     * @param password Password of user
+     * @param gender Gender of user
+     * @param city City user lives in
+     * @param birthyear Birthyear of user
+     * @param rating Rating of user
+     * @param totalPoints Total points of all sports
+     */
+    public PrivateUser(long id,
+                       String firstname,
+                       String lastname,
+                       String email,
+                       String password,
+                       String gender,
+                       String city,
+                       short birthyear,
+                       Rating rating,
+<span class="fc" id="L305">                       int totalPoints) {</span>
+<span class="fc" id="L306">        this.id = id;</span>
+<span class="fc" id="L307">        this.firstname = firstname;</span>
+<span class="fc" id="L308">        this.lastname = lastname;</span>
+<span class="fc" id="L309">        this.email = email;</span>
+<span class="fc" id="L310">        this.password = password;</span>
+<span class="fc" id="L311">        this.gender = gender;</span>
+<span class="fc" id="L312">        this.city = city;</span>
+<span class="fc" id="L313">        this.birthyear = birthyear;</span>
+<span class="fc" id="L314">        this.rating = rating;</span>
+<span class="fc" id="L315">        this.totalPoints = totalPoints;</span>
+<span class="fc" id="L316">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

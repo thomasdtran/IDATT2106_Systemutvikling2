@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SportStatsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.controller</a> &gt; <span class="el_source">SportStatsController.java</span></div><h1>SportStatsController.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.controller;
+
+import no.ntnu.idatt210620217.giddapi.Service.SportStatsService;
+import no.ntnu.idatt210620217.giddapi.model.SportStats;
+import no.ntnu.idatt210620217.giddapi.model.SportStatsInfo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+
+@RestController
+@RequestMapping(&quot;/api/v1/stats&quot;)
+@CrossOrigin
+<span class="fc" id="L18">public class SportStatsController {</span>
+    @Autowired
+    SportStatsService sportStatsService;
+
+    /**
+     * PostMapping for creating sportStats
+     * @param sportStatsInfo Requestbody
+     * @return sportstats and HttpStatus.CREATED or HttpStatus.BAD_REQUEST
+     */
+    @PostMapping
+    public ResponseEntity&lt;?&gt; createSportStatsWithPoints(@RequestBody SportStatsInfo sportStatsInfo) {
+        try{
+<span class="fc" id="L30">            SportStats sportStats = sportStatsService.createSportStatsWithPoints(sportStatsInfo);</span>
+<span class="fc" id="L31">            return new ResponseEntity&lt;&gt;(sportStats, HttpStatus.CREATED);</span>
+<span class="nc" id="L32">        }catch (NoSuchElementException e) {</span>
+<span class="nc" id="L33">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+        }
+    }
+
+    /**
+     * PutMapping for adding points
+     * @param sportStatsInfo Requestbody with sportstats id and points to be added
+     * @return sportstats and HttpStatus.OK or HttpStatus.BAD_REQUEST
+     */
+    @PutMapping
+    public ResponseEntity&lt;?&gt; addPoints(@RequestBody SportStatsInfo sportStatsInfo) {
+        try {
+<span class="fc" id="L45">            SportStats sportStats = sportStatsService.addPoints(sportStatsInfo);</span>
+<span class="fc" id="L46">            return new ResponseEntity&lt;&gt;(sportStats, HttpStatus.OK);</span>
+<span class="nc" id="L47">        } catch (NoSuchElementException e) {</span>
+<span class="nc" id="L48">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+        }
+    }
+
+    /**
+     * GetMapping for getting a list of sports by id sorted descending
+     * @param id of the sport to be listed
+     * @return list of all users with sportstats for the specific sport and HttpStatus.OK
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;?&gt; findAllStatsBySportId(@PathVariable long id) {
+<span class="fc" id="L59">        List&lt;SportStats&gt; allSportsById = sportStatsService.findAllStatsBySportId(id);</span>
+<span class="fc" id="L60">        return new ResponseEntity&lt;&gt;(allSportsById, HttpStatus.OK);</span>
+    }
+
+    /**
+     * GetMapping for getting a list of sportstats that a user had points in
+     * @param id of the user
+     * @return list of all sportsstats with specific user id and HttpStatus.OK
+     */
+    @GetMapping(&quot;/users/{id}&quot;)
+    public ResponseEntity&lt;?&gt; findAllStatsByUserId(@PathVariable long id) {
+<span class="fc" id="L70">        List&lt;SportStats&gt; allSportsByUserId = sportStatsService.findAllStatsByUserId(id);</span>
+<span class="fc" id="L71">        return new ResponseEntity&lt;&gt;(allSportsByUserId, HttpStatus.OK);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

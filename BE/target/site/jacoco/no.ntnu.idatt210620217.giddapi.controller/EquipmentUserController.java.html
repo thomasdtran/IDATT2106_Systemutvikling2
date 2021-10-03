@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EquipmentUserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.controller</a> &gt; <span class="el_source">EquipmentUserController.java</span></div><h1>EquipmentUserController.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.controller;
+
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import no.ntnu.idatt210620217.giddapi.model.BroughtEquipment;
+import no.ntnu.idatt210620217.giddapi.model.Equipment;
+import no.ntnu.idatt210620217.giddapi.Service.EquipmentUserService;
+import java.util.Collection;
+import org.slf4j.Logger;
+
+@RestController
+@RequestMapping(&quot;/api/v1/activities/{activityId}/equipment&quot;)
+@CrossOrigin
+<span class="fc" id="L19">public class EquipmentUserController {</span>
+    @Autowired
+    EquipmentUserService service;
+<span class="fc" id="L22">    Logger logger = LoggerFactory.getLogger(EquipmentUserController.class);</span>
+
+    /**
+     * For when a user updates an equipment in the equipmentlist for an activity
+     * @return Response message
+     */
+    @PutMapping
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; updateEquipmentList(@RequestBody BroughtEquipment broughtEquipment){
+<span class="nc" id="L31">        Equipment equipment = service.updateEquipmentList(broughtEquipment);</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        if(equipment == null){</span>
+<span class="nc" id="L33">            logger.error(&quot;Something went wrong&quot;);</span>
+<span class="nc" id="L34">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+        }else{
+<span class="nc" id="L36">            logger.info(&quot;Sucessfully updated equipmentlist&quot;);</span>
+<span class="nc" id="L37">            return new ResponseEntity&lt;&gt;(equipment,HttpStatus.OK);</span>
+        }
+    }
+
+    /**
+     * If a user wants to remove itself from bringing an equipment,
+     * or decides to leave an activity
+     * @param equipmentId
+     */
+    @DeleteMapping(&quot;/{equipmentId}/{userId}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; removeUserFromEquipment(@PathVariable long equipmentId, @PathVariable long userId){
+<span class="nc" id="L49">        Equipment equipment = service.removeUserFromEquipment(equipmentId, userId);</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if(equipment == null){</span>
+<span class="nc" id="L51">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+        }else{
+<span class="nc" id="L53">            logger.info(&quot;Sucessfully updated equipmentlist&quot;);</span>
+<span class="nc" id="L54">            return new ResponseEntity&lt;&gt;(equipment, HttpStatus.OK);</span>
+        }
+    }
+
+    /**
+     * Delete an equipment from the equipmentlist in the activity
+     *
+     * @param equipmentId
+     * @return Response message
+     */
+    @DeleteMapping
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    public ResponseEntity&lt;?&gt; deleteEquipment(@RequestParam long equipmentId){
+<span class="nc" id="L67">        Equipment equipment = service.deleteEquipment(equipmentId);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if(equipment == null){</span>
+<span class="nc" id="L69">            logger.error(&quot;Equipment not found&quot;);</span>
+<span class="nc" id="L70">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+        }else{
+<span class="nc" id="L72">            logger.info(&quot;Sucessfully deleted equipment from equipmentlist&quot;);</span>
+<span class="nc" id="L73">            return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+        }
+    }
+
+    /**
+     * Methode ot retrieve the equipmentlist from an activity
+     * @param activityId
+     * @return Response message and/or list with equipmentlist
+     */
+    @GetMapping
+    public ResponseEntity&lt;?&gt; getEquipmentList(@PathVariable long activityId) {
+<span class="nc" id="L84">        Collection&lt;Equipment&gt; response = service.getEquipmentList(activityId);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (response.isEmpty()) {</span>
+<span class="nc" id="L86">            logger.error(&quot;Equipmentlist is either empty or non-existent&quot;);</span>
+<span class="nc" id="L87">            return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+        } else {
+<span class="nc" id="L89">            logger.info(&quot;Sucessfully retrieved equipmentlist&quot;);</span>
+<span class="nc" id="L90">            return new ResponseEntity&lt;&gt;(response,HttpStatus.OK);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActivityController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.controller</a> &gt; <span class="el_source">ActivityController.java</span></div><h1>ActivityController.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.controller;
+
+import java.util.List;
+import no.ntnu.idatt210620217.giddapi.model.Activity;
+import no.ntnu.idatt210620217.giddapi.Service.ActivityService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.AccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+/**
+ * Controller for Activities
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/activities&quot;)
+@CrossOrigin
+<span class="fc" id="L22">public class ActivityController {</span>
+
+  @Autowired
+  ActivityService activityService;
+  
+<span class="fc" id="L27">  Logger logger = LoggerFactory.getLogger(ActivityController.class);</span>
+
+
+  /**
+   * GetMapping for finding all activities
+   * @return a list with all the activities
+   */
+  @GetMapping
+  public ResponseEntity&lt;?&gt; findAllActivities() {
+<span class="fc" id="L36">    List&lt;Activity&gt; allActivities = activityService.findAllActivities();</span>
+<span class="fc" id="L37">    logger.info(&quot;All activities shown&quot;);</span>
+<span class="fc" id="L38">    return new ResponseEntity&lt;&gt;(allActivities, HttpStatus.OK);</span>
+  }
+
+  /**
+   * GetMapping for finding activity by id
+   * @param id PathVariable from client
+   * @return activity and HttpStatus.OK or HttpStatus.BAD_REQUEST
+   */
+  @GetMapping(&quot;/{id}&quot;)
+  public ResponseEntity&lt;?&gt; findActivityById(@PathVariable long id) {
+<span class="nc" id="L48">    Activity activity = activityService.findActivityById(id);</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">    if(activity == null) {</span>
+<span class="nc" id="L50">      logger.info(&quot;Activity was not found&quot;);</span>
+<span class="nc" id="L51">      return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+    }
+<span class="nc" id="L53">    logger.info(&quot;Found activity with id: &quot; + id);</span>
+<span class="nc" id="L54">    return new ResponseEntity&lt;&gt;(activity, HttpStatus.OK);</span>
+  }
+
+  /**
+   * GetMapping for finding activity by title
+   * @param title PathVariable from client
+   * @return list with activities and HttpStatus.OK or HttpStatus.BAD_REQUEST
+   */
+  @GetMapping(&quot;/trigger/{title}&quot;)
+  public ResponseEntity&lt;?&gt; findActivityByTitle(@PathVariable String title) {
+<span class="fc" id="L64">    List&lt;Activity&gt; activity = activityService.findActivityByTitle(title);</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">    if (activity==null){</span>
+<span class="nc" id="L66">      logger.info(&quot;Activity with title: &quot; + title + &quot; not found&quot;);</span>
+    }
+<span class="fc" id="L68">    logger.info(&quot;Client searched for activity with title: &quot; + title);</span>
+<span class="fc" id="L69">    return new ResponseEntity&lt;&gt;(activity, HttpStatus.OK);</span>
+  }
+
+  /**
+   * PostMapping for creating an activity
+   * @param activity RequestBody from client
+   * @return activity and HttpStatus.CREATED or HttpStatus.BAD_REQUEST
+   */
+  @PostMapping(&quot;/{organizerId}&quot;)
+  @PreAuthorize(&quot;isAuthenticated()&quot;)
+  public ResponseEntity&lt;?&gt; createActivity(@RequestBody Activity activity, @PathVariable long organizerId) {
+    try{
+<span class="fc" id="L81">      Activity activity1 = activityService.createActivity(activity, organizerId);</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">      if(activity1==null){</span>
+<span class="nc" id="L83">        logger.info(&quot;Wrong format was given in creating of the activity :))&quot;);</span>
+<span class="nc" id="L84">        return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+      }
+<span class="fc" id="L86">      logger.info(&quot;New activity was created&quot;);</span>
+<span class="fc" id="L87">      return new ResponseEntity&lt;&gt;(activity1, HttpStatus.CREATED);</span>
+<span class="nc" id="L88">    }catch(AccessException accessException) {</span>
+<span class="nc" id="L89">      return new ResponseEntity&lt;&gt;(HttpStatus.FORBIDDEN);</span>
+<span class="nc" id="L90">    }catch (Exception e) {</span>
+<span class="nc" id="L91">      logger.info(&quot;Wrong format was given in creating of the activity. An exception was thrown.&quot;);</span>
+<span class="nc" id="L92">      return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+    }
+  }
+
+  /**
+   * PutMapping for updating acivity info
+   * @param activity Requesting Body with new activity info
+   * @param id of activity, PathVariable from client
+   * @return Activity and HttpStatus.OK if all ok or BAD_REQUEST
+   */
+  @PutMapping(&quot;/{id}&quot;)
+  @PreAuthorize(&quot;isAuthenticated()&quot;)
+  public ResponseEntity&lt;?&gt; updateActivity(@RequestBody Activity activity, @PathVariable long id) {
+<span class="fc" id="L105">    Activity updatedActivity = null;</span>
+    try {
+<span class="fc" id="L107">      updatedActivity = activityService.updateActivity(activity, id);</span>
+<span class="nc" id="L108">    } catch (AccessException e) {</span>
+<span class="nc" id="L109">      throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());</span>
+<span class="fc" id="L110">    }</span>
+
+<span class="fc bfc" id="L112" title="All 2 branches covered.">    if (updatedActivity == null){</span>
+<span class="fc" id="L113">      logger.info(&quot;Wrong format was given when updating activity&quot;);</span>
+<span class="fc" id="L114">      return new ResponseEntity&lt;&gt;(HttpStatus.BAD_REQUEST);</span>
+    }
+<span class="fc" id="L116">    logger.info(&quot;Updating activity with id:&quot; + id);</span>
+<span class="fc" id="L117">    return new ResponseEntity&lt;&gt;(updatedActivity, HttpStatus.OK);</span>
+  }
+
+
+  //todo: Make sure nothing needs to be deleted before activity is deleted.
+  /**
+   * DeleteMapping for deleting an activity
+   * @param id PathVariable which is the users id
+   * @return HttpStatus.OK
+   */
+  @DeleteMapping(&quot;/{id}&quot;)
+  @PreAuthorize(&quot;isAuthenticated()&quot;)
+  public ResponseEntity&lt;?&gt; deleteActivity(@PathVariable long id) {
+    try {
+<span class="fc" id="L131">      activityService.deleteActivity(id);</span>
+<span class="fc" id="L132">      logger.info(&quot;Deleted activity&quot;);</span>
+<span class="nc" id="L133">    } catch (AccessException e) {</span>
+<span class="nc" id="L134">      throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());</span>
+<span class="fc" id="L135">    }</span>
+<span class="fc" id="L136">    return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+  }
+
+  /**
+   * Method for creating a rating to give to organizer of activity
+   * @param activityId activity that organizer has organized
+   * @param userId user giving rating
+   * @param rating the rating to be given
+   * @return status code if successfull or not
+   */
+  @PostMapping(&quot;/{activityId}/rating/{userId}/{rating}&quot;)
+  public ResponseEntity&lt;?&gt; createRating(@PathVariable long activityId,
+                                        @PathVariable long userId,
+                                        @PathVariable int rating) {
+
+    try {
+<span class="fc" id="L152">      activityService.createRating(activityId, userId, rating);</span>
+<span class="fc" id="L153">      return new ResponseEntity&lt;&gt;(HttpStatus.OK);</span>
+<span class="fc" id="L154">    } catch (Exception e) {</span>
+<span class="fc" id="L155">      logger.warn(e.getMessage());</span>
+<span class="fc" id="L156">      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

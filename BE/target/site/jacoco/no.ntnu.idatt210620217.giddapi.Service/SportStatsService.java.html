@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SportStatsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">SportStatsService.java</span></div><h1>SportStatsService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import no.ntnu.idatt210620217.giddapi.model.*;
+import no.ntnu.idatt210620217.giddapi.repo.ActivityRepo;
+import no.ntnu.idatt210620217.giddapi.repo.SportRepo;
+import no.ntnu.idatt210620217.giddapi.repo.SportStatsRepo;
+import no.ntnu.idatt210620217.giddapi.repo.UserRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
+
+/**
+ * Service class for sportStats service
+ */
+@Service
+<span class="fc" id="L23">public class SportStatsService {</span>
+    @Autowired
+    SportStatsRepo sportStatsRepo;
+    @Autowired
+    SportRepo sportRepo;
+    @Autowired
+    UserRepo userRepo;
+    @Autowired
+    ActivityRepo activityRepo;
+
+<span class="fc" id="L33">    Logger logger = LoggerFactory.getLogger(EquipmentUserService.class);</span>
+
+
+    /**
+     * Method for creating sportstats
+     * @param sportStatsInfo object containing info about sport id, user id and points
+     * @return sportstats or throws exception if sportStatsInfo contain wrong info
+     */
+    public SportStats createSportStatsWithPoints (SportStatsInfo sportStatsInfo) {
+<span class="fc" id="L42">        Sport sport = sportRepo.findById(sportStatsInfo.getSportId());</span>
+<span class="fc" id="L43">        User user = userRepo.findById(sportStatsInfo.getUserId());</span>
+<span class="pc bpc" id="L44" title="2 of 4 branches missed.">        if(sport == null || user == null) {</span>
+<span class="nc" id="L45">            throw new NoSuchElementException();</span>
+        }
+<span class="fc" id="L47">        SportStats sportStats = new SportStats(sport, user, sportStatsInfo.getPoints());</span>
+
+<span class="fc" id="L49">        int currentTotaltPoints = sportStats.getUser().getTotalPoints();</span>
+<span class="fc" id="L50">        currentTotaltPoints += sportStatsInfo.getPoints();</span>
+<span class="fc" id="L51">        sportStats.getUser().setTotalPoints(currentTotaltPoints);</span>
+<span class="fc" id="L52">        return sportStatsRepo.save(sportStats);</span>
+    }
+
+    /**
+     * Method for adding points to an already created sportstats
+     * @param sportStatsInfo containing sport id, user id and the points to get added
+     * @return sportstats or throws exception if sportStatsInfo contain wrong info
+     */
+    public SportStats addPoints (SportStatsInfo sportStatsInfo) {
+<span class="fc" id="L61">        SportUserId sportUserId = new SportUserId(sportStatsInfo.getSportId(), sportStatsInfo.getUserId());</span>
+<span class="fc" id="L62">        Optional&lt;SportStats&gt; sportStats = sportStatsRepo.findById(sportUserId);</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if(!sportStats.isPresent()) {</span>
+<span class="nc" id="L64">            createSportStatsWithPoints(sportStatsInfo);</span>
+<span class="nc" id="L65">            logger.info(&quot;SportStats not found, so automatically create an empty one&quot;);</span>
+        }
+<span class="fc" id="L67">        logger.info(&quot;Addpoints method: &quot; + sportStatsInfo.getUserId());</span>
+<span class="fc" id="L68">        int currentPoints = sportStats.get().getPoints();</span>
+<span class="fc" id="L69">        currentPoints += 10;</span>
+<span class="fc" id="L70">        sportStats.get().setPoints(currentPoints);</span>
+<span class="fc" id="L71">        int currentTotaltPoints = sportStats.get().getUser().getTotalPoints();</span>
+<span class="fc" id="L72">        currentTotaltPoints += 10;</span>
+<span class="fc" id="L73">        sportStats.get().getUser().setTotalPoints(currentTotaltPoints);</span>
+<span class="fc" id="L74">        userRepo.save(sportStats.get().getUser());</span>
+<span class="fc" id="L75">        return sportStatsRepo.save(sportStats.get());</span>
+    }
+
+    /**
+     * Method for finding all stats by a spesific sport
+     * @param sportId the sport you want to find stats for
+     * @return a sorted list containing all sportstats to a sport in descending order
+     */
+    public List&lt;SportStats&gt; findAllStatsBySportId(long sportId) {
+<span class="fc" id="L84">        List&lt;SportStats&gt; allSports = sportStatsRepo.findAll();</span>
+<span class="fc" id="L85">        List&lt;SportStats&gt; allSportsById = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        for(SportStats sportStats : allSports) {</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">            if(sportStats.getId().getSportId() == sportId) {</span>
+<span class="fc" id="L88">                allSportsById.add(sportStats);</span>
+            }
+<span class="fc" id="L90">        }</span>
+<span class="fc" id="L91">        allSportsById.sort(Comparator.comparingInt(SportStats::getPoints));</span>
+<span class="fc" id="L92">        Collections.reverse(allSportsById);</span>
+<span class="fc" id="L93">        return allSportsById;</span>
+    }
+
+
+    /**
+     *  Method fetching all sport stats to a given user
+     * @param userId Identifier for a user
+     * @return A list of sport-stats for a given user
+     */
+    public List&lt;SportStats&gt; findAllStatsByUserId(long userId) {
+<span class="fc" id="L103">        List&lt;SportStats&gt; allSports = sportStatsRepo.findAll();</span>
+<span class="fc" id="L104">        List&lt;SportStats&gt; allSportsByUserId = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for(SportStats sportStats : allSports) {</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            if(sportStats.getId().getUserId() == userId) {</span>
+<span class="fc" id="L107">                allSportsByUserId.add(sportStats);</span>
+            }
+<span class="fc" id="L109">        }</span>
+<span class="fc" id="L110">        return allSportsByUserId;</span>
+    }
+
+    /**
+     * Method for delegating points to participant of activity after activity has finished
+     * @param activity Activity object
+     */
+    private void delegateActivityPoints(Activity activity){
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        for (Participant participant : activity.getParticipants()){</span>
+<span class="nc" id="L119">            SportStatsInfo sportStatsInfo = new SportStatsInfo(activity.getSport().getId(),</span>
+<span class="nc" id="L120">                    participant.getUser().getId(),  0);</span>
+<span class="nc" id="L121">            logger.info(&quot;Points awarded to: &quot; + participant.getUser().toString());</span>
+<span class="nc" id="L122">            addPoints(sportStatsInfo);</span>
+<span class="nc" id="L123">            activity.setHasReceivedActivityPoints(true);</span>
+<span class="nc" id="L124">            activityRepo.save(activity);</span>
+<span class="nc" id="L125">        }</span>
+<span class="nc" id="L126">    }</span>
+
+    /**
+     * Scheduler that checks once an hour wether activities has finished or not.
+     * If finished the activities will delegate points to participants
+     */
+    @Async
+    @Scheduled(fixedRate = 60000 ) // Should run once an hour 3600000ms
+    public void activityIsOverScheduler() {
+<span class="fc" id="L135">        logger.info(&quot;running scheduler&quot;);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        for (Activity activity : activityRepo.findAll()){</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            if (!activity.isHasReceivedActivityPoints()){</span>
+                // Dates for &quot;now-time&quot; and activity
+<span class="nc" id="L139">                LocalDate nowDate = LocalDate.now();</span>
+<span class="nc" id="L140">                LocalDate activityDate = LocalDate.parse(activity.getDate());</span>
+                // checks if activity day is before this months day
+<span class="nc bnc" id="L142" title="All 2 branches missed.">                if (!activityDate.isBefore(nowDate)){</span>
+                    // checks if activity day is equal to today, and if activity (in hours) is less than &quot;now-time&quot;
+<span class="nc bnc" id="L144" title="All 4 branches missed.">                    if (nowDate.equals(activityDate) &amp;&amp; LocalTime.parse(activity.getEndTime()).isBefore(LocalTime.now())){</span>
+<span class="nc" id="L145">                        delegateActivityPoints(activity);</span>
+<span class="nc" id="L146">                        logger.info(&quot;delegating points&quot;);</span>
+                    }
+                } else {
+                    // If activity-day of month is less than &quot;now-time&quot;-day of month
+<span class="nc" id="L150">                    delegateActivityPoints(activity);</span>
+<span class="nc" id="L151">                    logger.info(&quot;delegating points&quot;);</span>
+                }
+            }
+<span class="nc" id="L154">        }</span>
+<span class="fc" id="L155">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

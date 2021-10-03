@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EquipmentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">EquipmentService.java</span></div><h1>EquipmentService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import no.ntnu.idatt210620217.giddapi.model.Activity;
+import no.ntnu.idatt210620217.giddapi.model.Equipment;
+import no.ntnu.idatt210620217.giddapi.repo.ActivityRepo;
+import no.ntnu.idatt210620217.giddapi.repo.EquipmentRepo;
+
+import java.util.Collection;
+
+import no.ntnu.idatt210620217.giddapi.security.BasicUserDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.AccessException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Service class for Equipment
+ */
+@Service
+<span class="fc" id="L22">public class EquipmentService {</span>
+    @Autowired
+    private EquipmentRepo equipmentRepo;
+
+    @Autowired
+    private ActivityRepo activityRepo;
+
+<span class="fc" id="L29">    Logger logger = LoggerFactory.getLogger(EquipmentService.class);</span>
+
+    /**
+     * Method for adding equipment to activity
+     * @param activityId Id of the activity to add equipment to
+     * @param equipments List of equipments to be added to activity
+     * @return List of added equipment
+     * @throws AccessException
+     */
+    public Collection&lt;Equipment&gt;addEquipment(long activityId, Collection&lt;Equipment&gt; equipments) throws AccessException {
+<span class="nc" id="L39">        Activity activity = activityRepo.findById(activityId);</span>
+
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (equipments.isEmpty()) {</span>
+<span class="nc" id="L42">            return equipments;</span>
+        } 
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        else if(activity == null){</span>
+<span class="nc" id="L45">            return null;</span>
+        }
+
+        //checks if authenticated user is also organizer of activity
+<span class="nc" id="L49">        BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if(authenticatedUser.getId() != activity.getOrganizer().getId())</span>
+<span class="nc" id="L51">            throw new AccessException(&quot;Cannot add equipment if authenticated user is not organizer of activity&quot;);</span>
+
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        for (Equipment eq : equipments){</span>
+<span class="nc" id="L54">            eq.setActivity(activity);</span>
+<span class="nc" id="L55">            equipmentRepo.save(eq);</span>
+<span class="nc" id="L56">        }</span>
+<span class="nc" id="L57">        return equipmentRepo.findByActivityId(activityId);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,12 @@
+-------------------------------------------------------------------------------
+Test set: no.ntnu.idatt210620217.giddapi.controller.NotificationControllerTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.593 s <<< FAILURE! - in no.ntnu.idatt210620217.giddapi.controller.NotificationControllerTest
+whenGetAllNotifications_thenReturnNotificationWithRightTitle  Time elapsed: 0.108 s  <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<400>
+	at no.ntnu.idatt210620217.giddapi.controller.NotificationControllerTest.whenGetAllNotifications_thenReturnNotificationWithRightTitle(NotificationControllerTest.java:89)
+
+whenCreateNotification_thenReturnCreatedNotification  Time elapsed: 0.099 s  <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<400>
+	at no.ntnu.idatt210620217.giddapi.controller.NotificationControllerTest.whenCreateNotification_thenReturnCreatedNotification(NotificationControllerTest.java:82)
+

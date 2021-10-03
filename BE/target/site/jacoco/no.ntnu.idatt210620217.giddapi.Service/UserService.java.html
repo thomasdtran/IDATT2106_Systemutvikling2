@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gidd-api</a> &gt; <a href="index.source.html" class="el_package">no.ntnu.idatt210620217.giddapi.Service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package no.ntnu.idatt210620217.giddapi.Service;
+
+import no.ntnu.idatt210620217.giddapi.emailUtil.EmailService;
+import no.ntnu.idatt210620217.giddapi.model.Rating;
+import no.ntnu.idatt210620217.giddapi.model.User;
+import no.ntnu.idatt210620217.giddapi.repo.UserRepo;
+import no.ntnu.idatt210620217.giddapi.security.BasicUserDetails;
+import no.ntnu.idatt210620217.giddapi.security.PasswordGenerator;
+import no.ntnu.idatt210620217.giddapi.security.Sha256PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.expression.AccessException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+/**
+ * Service class for user service
+ */
+@Service
+<span class="fc" id="L23">public class UserService {</span>
+    @Autowired
+    private UserRepo userRepo;
+    @Autowired
+    private EmailService emailService;
+    @Value(&quot;${security.salt}&quot;)
+    String salt;
+
+
+
+    /**
+     * Method for creating user
+     * @param user data received from client to create user
+     * @return user created or throw exception if input is wrong
+     */
+    public User createUser(User user) {
+<span class="nc" id="L39">        user.setPassword(hashPassword(user.getPassword()));</span>
+
+<span class="nc bnc" id="L41" title="All 6 branches missed.">        if(!isLetters(user.getFirstname()) || !isLetters(user.getLastname()) || !isLetters(user.getCity())) {</span>
+<span class="nc" id="L42">            throw new IllegalArgumentException(&quot;Firstname, lastname or city did not contain only letters&quot;);</span>
+<span class="nc bnc" id="L43" title="All 4 branches missed.">        } else if (!user.getEmail().contains(&quot;@&quot;) || !user.getEmail().contains(&quot;.&quot;)) {</span>
+<span class="nc" id="L44">            throw new IllegalArgumentException(&quot;Email must contain @ and .&quot;);</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        } else if (String.valueOf(user.getBirthyear()).length() != 4) {</span>
+<span class="nc" id="L46">            throw new IllegalArgumentException(&quot;Wrong format for birthday&quot;);</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        } else if (!isValidGender(user.getGender())) {</span>
+<span class="nc" id="L48">            throw new IllegalArgumentException(&quot;Wrong format for gender&quot;);</span>
+        }
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (user.getRating() == null){</span>
+<span class="nc" id="L51">            Rating rating = new Rating(user);</span>
+<span class="nc" id="L52">            user.setRating(rating);</span>
+        }
+<span class="nc" id="L54">        return userRepo.save(user);</span>
+    }
+
+    /**
+     * Method for finding user by id
+     * @param id you want to use to find user
+     * @return user or null if user does not exist
+     */
+    public Object findUserById(long id) throws AccessException {
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if(userRepo.findById(id) == null) {</span>
+<span class="nc" id="L64">            throw new NoSuchElementException(&quot;No such user with &quot; + id + &quot; exist&quot;);</span>
+        }
+
+<span class="fc" id="L67">        BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if(authenticatedUser.getId() != id)</span>
+<span class="nc" id="L69">            throw new AccessException(&quot;Cannot request user different than the authenticated user&quot;);</span>
+
+<span class="fc" id="L71">        return userRepo.findById(id).getPrivateUser();</span>
+    }
+
+    /**
+     * A method for updating a user, contains checks for invalid input
+     * @param newUserData, new data recieved from user
+     * @param id, id of the user sending data
+     * @return User object containing the new info
+     */
+    public User updateUser(User newUserData, long id) throws AccessException {
+<span class="fc" id="L81">        User current = userRepo.findById(id);</span>
+
+<span class="fc" id="L83">        BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if(authenticatedUser.getId() != id)</span>
+<span class="nc" id="L85">            throw new AccessException(&quot;Cannot update user different than the authenticated user&quot;);</span>
+
+<span class="pc bpc" id="L87" title="1 of 4 branches missed.">        if ((newUserData.getFirstname() != null) &amp;&amp; (!(newUserData.getFirstname().equals(current.getFirstname())))) {</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">            if (isLetters(newUserData.getFirstname())) {</span>
+<span class="fc" id="L89">                current.setFirstname(newUserData.getFirstname());</span>
+            } else {
+<span class="nc" id="L91">                throw new IllegalArgumentException(&quot;Firstname did not contain only letters&quot;);</span>
+            }
+        }
+<span class="pc bpc" id="L94" title="1 of 4 branches missed.">        if ((newUserData.getLastname() != null) &amp;&amp; !(newUserData.getLastname().equals(current.getLastname()))) {</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">            if (isLetters(newUserData.getLastname())) {</span>
+<span class="fc" id="L96">                current.setLastname(newUserData.getLastname());</span>
+            } else {
+<span class="nc" id="L98">                throw new IllegalArgumentException(&quot;Lastname did not contain only letters&quot;);</span>
+            }
+        }
+<span class="pc bpc" id="L101" title="2 of 4 branches missed.">        if ((newUserData.getBirthyear() != 0) &amp;&amp; (newUserData.getBirthyear() != current.getBirthyear())) {</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            if (String.valueOf(newUserData.getBirthyear()).length() == 4) {</span>
+<span class="fc" id="L103">                current.setBirthyear(newUserData.getBirthyear());</span>
+            } else {
+<span class="fc" id="L105">                throw new IllegalArgumentException(&quot;Wrong format for birthday&quot;);</span>
+            }
+        }
+<span class="pc bpc" id="L108" title="3 of 4 branches missed.">        if ((newUserData.getEmail() != null) &amp;&amp; (!(newUserData.getEmail().equals(current.getEmail())))) {</span>
+<span class="nc bnc" id="L109" title="All 4 branches missed.">            if (newUserData.getEmail().contains(&quot;@&quot;) &amp;&amp; newUserData.getEmail().contains(&quot;.&quot;)) {</span>
+<span class="nc" id="L110">                current.setEmail(newUserData.getEmail());</span>
+            } else {
+<span class="nc" id="L112">                throw new IllegalArgumentException(&quot;Email must contain @ and .&quot;);</span>
+            }
+        }
+<span class="pc bpc" id="L115" title="2 of 4 branches missed.">        if ((newUserData.getGender() != null) &amp;&amp; (!(newUserData.getGender().equals(current.getGender())))) {</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">            if (isValidGender(newUserData.getGender())) {</span>
+<span class="fc" id="L117">                current.setGender(newUserData.getGender());</span>
+            } else {
+<span class="nc" id="L119">                throw new IllegalArgumentException(&quot;Wrong format for gender&quot;);</span>
+            }
+        }
+        //TODO password security
+<span class="pc bpc" id="L123" title="3 of 4 branches missed.">        if ((newUserData.getPassword() != null) &amp;&amp; ((!hashPassword(newUserData.getPassword()).equals(current.getPassword())))) {</span>
+<span class="nc" id="L124">            current.setPassword(hashPassword(newUserData.getPassword()));</span>
+        }
+<span class="pc bpc" id="L126" title="3 of 4 branches missed.">        if ((newUserData.getCity() != null) &amp;&amp; (!(newUserData.getCity().equals(current.getCity())))) {</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">            if (isLetters(newUserData.getCity())) {</span>
+<span class="nc" id="L128">                current.setCity(newUserData.getCity());</span>
+            } else {
+<span class="nc" id="L130">                throw new IllegalArgumentException(&quot;City did not contain only letters&quot;);</span>
+            }
+
+        }
+<span class="fc" id="L134">        return userRepo.save(current);</span>
+    }
+
+    /**
+     * Method for deleting a user
+     * @param id, of the user that is to be deleted
+     */
+    public void deleteUser(long id) throws AccessException {
+<span class="fc" id="L142">        BasicUserDetails authenticatedUser = (BasicUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        if(authenticatedUser.getId() != id)</span>
+<span class="nc" id="L144">            throw new AccessException(&quot;Cannot delete user different than the authenticated user&quot;);</span>
+
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if(userRepo.findById(id) == null) {</span>
+<span class="nc" id="L147">            throw new NoSuchElementException(&quot;No such user with &quot; + id + &quot; exist&quot;);</span>
+        } else {
+<span class="fc" id="L149">            userRepo.deleteById(id);</span>
+        }
+<span class="fc" id="L151">    }</span>
+
+    /**
+     * Method for extracting specific user info
+     * @return list containing string arrays with users firstname, lastname and total points
+     */
+    public List&lt;String[]&gt; getUsersAndTotalPoints() {
+<span class="fc" id="L158">        List&lt;User&gt; allUsers = userRepo.findAll();</span>
+<span class="fc" id="L159">        List&lt;String[]&gt; userAndTotaltPoints = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        for(User user : allUsers) {</span>
+<span class="fc" id="L161">            String[] nameAndTotalPoints = new String[3];</span>
+<span class="fc" id="L162">            nameAndTotalPoints[0] = user.getFirstname();</span>
+<span class="fc" id="L163">            nameAndTotalPoints[1] = user.getLastname();</span>
+<span class="fc" id="L164">            nameAndTotalPoints[2] = String.valueOf(user.getTotalPoints());</span>
+<span class="fc" id="L165">            userAndTotaltPoints.add(nameAndTotalPoints);</span>
+<span class="fc" id="L166">        }</span>
+<span class="pc" id="L167">        userAndTotaltPoints.sort(Comparator.comparing(a -&gt; Integer.parseInt(a[2])));</span>
+<span class="fc" id="L168">        Collections.reverse(userAndTotaltPoints);</span>
+
+<span class="fc" id="L170">        return userAndTotaltPoints;</span>
+    }
+
+    /**
+     * Method for checking if password is equal to password in database
+     * @param id id of user that sends in password
+     * @param password password sent in
+     * @return boolean if password is correct or not
+     */
+    public boolean confirmPassword(long id, String password) {
+<span class="nc" id="L180">        User user = userRepo.findById(id);</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if(user == null) return false;</span>
+
+<span class="nc" id="L183">        return hashPassword(password).equals(user.getPassword());</span>
+    }
+
+    /**
+     * Method used in createUser and updateUser to check if gender input is valid
+     * @param gender, a String recieved from user
+     * @return boolean, saying if it the input is valid
+     */
+    public boolean isValidGender(String gender) {
+<span class="fc" id="L192">        String genders = &quot;kvinne mann annet&quot;;</span>
+<span class="fc" id="L193">        String[] gendersSplit = genders.split(&quot; &quot;);</span>
+
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        for (String word : gendersSplit) {</span>
+<span class="fc bfc" id="L196" title="All 2 branches covered.">            if (gender.toLowerCase().equals(word)) {</span>
+<span class="fc" id="L197">                return true;</span>
+            }
+        }
+<span class="nc" id="L200">        return false;</span>
+    }
+
+    /**
+     * Method used to check if input from user contains only letters
+     * @param name, name recieved from user
+     * @return boolean saying if the input is valid
+     */
+    public boolean isLetters(String name) {
+<span class="fc" id="L209">        char[] chars = name.toCharArray();</span>
+
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">        for (char c : chars) {</span>
+<span class="pc bpc" id="L212" title="3 of 4 branches missed.">            if(Character.isLetter(c) || c ==' ') {</span>
+<span class="fc" id="L213">                return true;</span>
+            }
+        }
+<span class="nc" id="L216">        return false;</span>
+    }
+
+    /**
+     * Method for recovering password of a user. New pw is sent to users email
+     * @param email Email of a user
+     */
+    public void recoverPassword(String email){
+<span class="nc" id="L224">        User user =  userRepo.findUserByEmail(email);</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        if (user == null) throw new NullPointerException(&quot;User with this email was not found&quot;);</span>
+<span class="nc" id="L226">        String newPassword = PasswordGenerator.generatePassword();</span>
+<span class="nc" id="L227">        user.setPassword(hashPassword(newPassword));</span>
+<span class="nc" id="L228">        userRepo.save(user);</span>
+
+        // sends email to user
+<span class="nc" id="L231">        emailService.sendEmail(email, &quot;Gidd! varsler&quot;, &quot;Forandringer med din Gidd! bruker\n&quot; +</span>
+                &quot;Ditt nye passord er: &quot; + newPassword);
+<span class="nc" id="L233">    }</span>
+
+    /**
+     * A method to hash strings.
+     * @param toHash the string that should be hashed
+     * @return the hashed string
+     */
+    private String hashPassword(String toHash) {
+<span class="fc" id="L241">        PasswordEncoder passwordEncoder = new Sha256PasswordEncoder(salt);</span>
+<span class="nc" id="L242">        return passwordEncoder.encode(toHash);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
